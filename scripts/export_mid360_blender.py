@@ -32,24 +32,32 @@ def main():
             bpy.data.objects.remove(obj, do_unlink=True)
     body = bpy.data.objects['MID360_colored']
     mesh = body.data
-    # Use the optical cap plane for +Z and the front housing side plane for +X.
-    top = max((p for p in mesh.polygons if p.center.z > .058 and p.normal.z > .99),
-              key=lambda p: p.area)
-    front = max((p for p in mesh.polygons if p.normal.x > .999 and
-                 abs(p.normal.y) < .0001 and .03 < p.normal.z < .04), key=lambda p: p.area)
-    z = np.array(top.normal, dtype=float)
-    z /= np.linalg.norm(z)
-    x = np.array(front.normal, dtype=float)
-    x -= z * np.dot(x, z)
-    x /= np.linalg.norm(x)
-    rotation = np.stack([x, np.cross(z, x), z])
+    # Keep the audited registration after winding repairs; face normals may change.
+    saved_registration = json.loads(body['mid360_source_to_mount']) if 'mid360_source_to_mount' in body else None
     original = np.array([body.matrix_world @ vertex.co for vertex in mesh.vertices])
+    if saved_registration is not None:
+        transform = np.array(saved_registration, dtype=float)
+        if transform.shape != (4, 4) or not np.isfinite(transform).all() or not np.allclose(transform[3], [0, 0, 0, 1]):
+            raise ValueError('Invalid saved registration')
+        rotation, center = transform[:3, :3], -transform[:3, 3]
+    else:
+        # Legacy sources: optical cap for +Z and front housing side plane for +X.
+        top = max((p for p in mesh.polygons if p.center.z > .058 and p.normal.z > .99), key=lambda p: p.area)
+        front = max((p for p in mesh.polygons if p.normal.x > .999 and
+                     abs(p.normal.y) < .0001 and .03 < p.normal.z < .04), key=lambda p: p.area)
+        z = np.array(top.normal, dtype=float)
+        z /= np.linalg.norm(z)
+        x = np.array(front.normal, dtype=float)
+        x -= z * np.dot(x, z)
+        x /= np.linalg.norm(x)
+        rotation = np.stack([x, np.cross(z, x), z])
+        aligned = original @ rotation.T
+        bottom = aligned[aligned[:, 2] < aligned[:, 2].min() + 1e-4]
+        center = (bottom.min(0) + bottom.max(0)) / 2
+        center[2] = aligned[:, 2].min()
     aligned = original @ rotation.T
-    bottom = aligned[aligned[:, 2] < aligned[:, 2].min() + 1e-4]
-    center = (bottom.min(0) + bottom.max(0)) / 2
-    center[2] = aligned[:, 2].min()
     canonical = aligned - center
-    if not np.allclose(rotation @ rotation.T, np.eye(3), atol=1e-7):
+    if not np.allclose(rotation @ rotation.T, np.eye(3), atol=1e-7) or not np.isclose(np.linalg.det(rotation), 1):
         raise ValueError('Registration is not a rigid rotation')
     if not (.072 < np.ptp(canonical[:, 0]) < .074 and
             .064 < np.ptp(canonical[:, 1]) < .066 and .059 < np.ptp(canonical[:, 2]) < .061):

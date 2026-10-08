@@ -7,7 +7,8 @@
 - 官方模型入口：[Livox MID-360 Downloads](https://www.livoxtech.com/mid-360/downloads)。
 - 原 STL SHA256：`1fad48d70c34846e32dc2376782c875bea04b9ae0c2969515592469e4fab3e02`。
 - 输入彩色 Blender SHA256：`ce2f09c4dc120a688d301f354390918ea352254c4fd92c09d5981636d274b0aa`。
-- 本仓库精简制作源 `source.blend` SHA256：`ac80b9d9038b5d5d157544167ab4a307c4db96b180c4ea87f24a28e67fe6e018`。
+- 本仓库修复前精简制作源 SHA256：`ac80b9d9038b5d5d157544167ab4a307c4db96b180c4ea87f24a28e67fe6e018`。
+- 当前 `source.blend` SHA256：`07a218afc6168ba1ff5e26ca6a06ebb0930010cc183a2e843d360e37699517b0`。
 - 运行网格与完整转换矩阵的校验信息见 `geometry_report.json`。
 
 制作源仅保留传感器网格及三个可移除文字对象，删除默认立方体、灯光和相机；原工程文件没有改写。原始 STL／官方 STEP 没有重复打包，运行与重新导出都不需要其他机器人工作空间。
@@ -42,3 +43,9 @@ blender -b --factory-startup --python scripts/export_mid360_blender.py -- \
 ```
 
 本机验证重新导出的 DAE 与收录文件 SHA256 一致。运行安装仅包含 DAE、几何报告和本说明，不安装制作源 `.blend`。Blender 仅用于资产制作，不是仿真运行依赖。
+
+## 面朝向修复
+
+2026-10-09 根据 Gazebo／RViz 中外壳透视般缺面的反馈，检查发现主体壳体（21958 面）和一处小部件（268 面）具有一致但向内的面朝向。修复反转这两处的三角形绕序并更新法线，共 22226 面；不是透明材质问题，也没有通过关闭背面剔除掩盖缺陷。
+
+顶点逐项不变、主体面数不变、583 条原有边界边保留，未自动封孔、添加厚度或改变碰撞体／坐标。配准矩阵固定存入制作源，避免法线改变后重新选取参考面造成坐标漂移。修复脚本为 `scripts/repair_mid360_normals.py`，审计数据见 `normal_repair.json`。这里保留安装细节及原有开放曲面，不宣称整份多部件网格已变成单一闭合实体。

@@ -47,6 +47,46 @@ def test_official_imu_offset():
     assert np.allclose(np.array(config['imu_xyz']) - lidar, [.011, .02329, -.04412])
 
 
+def test_body_winding_faces_outward():
+    """A one-sided renderer must see the shell, not its interior back faces."""
+    root = ET.parse(ROOT / 'meshes/mid360/mid360.dae')
+    body = next(g for g in root.findall('c:library_geometries/c:geometry', NS)
+                if g.get('name') == 'MID360_colored')
+    positions = next(item for item in body.findall('.//c:source/c:float_array', NS)
+                     if item.get('id').endswith('positions_array'))
+    vertices = np.fromstring(positions.text, sep=' ').reshape(-1, 3)
+    faces = np.concatenate([np.fromstring(t.find('c:p', NS).text, sep=' ', dtype=int)
+                            .reshape(-1, 3, 2)[:, :, 0] for t in body.findall('.//c:triangles', NS)])
+    parent = list(range(len(faces)))
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    edge_owner = {}
+    for index, (a, b, c) in enumerate(faces):
+        for edge in ((a, b), (b, c), (c, a)):
+            key = tuple(sorted(edge))
+            if key in edge_owner:
+                parent[find(index)] = find(edge_owner[key])
+            else:
+                edge_owner[key] = index
+    groups = {}
+    for index, face in enumerate(faces):
+        groups.setdefault(find(index), []).append(face)
+    shell = max(groups.values(), key=len)
+    a, b, c = vertices[np.array(shell)].transpose(1, 0, 2)
+    volume = np.einsum('ij,ij->i', a, np.cross(b, c)).sum() / 6
+    assert len(shell) == 21958
+    assert volume > 8e-5, 'Main housing winding is reversed (backface-culling regression)'
+    report = json.loads((ROOT / 'meshes/mid360/normal_repair.json').read_text())
+    assert report['vertices_unchanged']
+    assert report['boundary_edges_before'] == report['boundary_edges_after']
+    assert report['flipped_faces'] == 22226
+
+
 def test_primitive_fallback(monkeypatch):
     import xacro
     import xacro.substitution_args

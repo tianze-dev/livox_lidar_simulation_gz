@@ -1,5 +1,5 @@
 {
-  "source_sha256": "ce2f09c4dc120a688d301f354390918ea352254c4fd92c09d5981636d274b0aa",
+  "source_sha256": "07a218afc6168ba1ff5e26ca6a06ebb0930010cc183a2e843d360e37699517b0",
   "source_body_triangles": 84099,
   "exported_triangles": 84766,
   "units": "meter",
@@ -135,5 +135,5 @@
       "roughness_source": 0.4000000059604645
     }
   ],
-  "output_sha256": "74a2d177b185d64d301df208a78dedae7b3e8403eda15b52825e4cdb2b100901"
+  "output_sha256": "ecf5912c5f6f91e999d95f62a4e1ad418984e58e6383793d752c2bac2187a031"
 }
