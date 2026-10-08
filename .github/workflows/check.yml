@@ -1,0 +1,21 @@
+name: Build and unit tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cpu-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Whitespace check
+        run: git show --format= --check HEAD
+      - name: Clean-container build and unit tests (no GPU required)
+        run: docker build -f docker/Dockerfile -t livox-gz-ci .
+      - name: GPU integration is a separate manual gate
+        run: echo 'CPU job does not mark GPU, GUI or performance tests as passed.'

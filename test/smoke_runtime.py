@@ -147,4 +147,6 @@ def main():
 
 
 if __name__ == '__main__':
+    if not __debug__:
+        raise SystemExit('Validation requires assertions enabled; do not use Python -O')
     raise SystemExit(main())

@@ -4,6 +4,7 @@
 /log/
 /generated/
 /run/
+/dist/
 /.deps/
 /.cache/
 /dependencies/local.json

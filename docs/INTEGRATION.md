@@ -8,6 +8,8 @@
 
 子模块由父项目锁定提交，更新后重新构建；避免在一个工作空间同时保留同名旧包。当前尚无远程地址，因此这里不提供虚构的 `git submodule add` 命令。
 
+即使旧包名字不同，也不要同时加载两套同名 RGL 插件／共享库；父工程迁移时只启用一套扫描实现和一个场景管理器。本包精细网格已校正安装轴向，不能不加核对地复制旧工程针对倾斜 STL 的安装补偿。迁移修改在父项目中另行完成。
+
 ## 在机器人中挂载
 
 父项目的 URDF/Xacro 中包括：
@@ -62,6 +64,18 @@ IMU 使用 Gazebo 原生 Imu，单位为 rad/s 和 m/s²。静止水平放置时
 
 核心改动在本仓库提交；父项目主动更新到验证过的提交或标签，并提交子模块指针。每个父工作空间仍需构建与验证，尤其是 TF 唯一性、话题隔离和机器人自遮挡。本次不修改现有哨兵或无人机仓库。
 
+## 移动载体验证入口
+
+`demo.launch.py moving:=true` 使用世界锚定的滑台和转台，不使用位姿瞬移伪装物理运动。Gazebo JointController 驱动两个实际关节，JointStatePublisher 的反馈通过 ros_gz_bridge 发布到 `/fixture/<name>/joint_states`，robot_state_publisher 据此发布动态 TF。原有传感器挂载宏和固定外参不变。
+
+默认直线速度 0.1 m/s、角速度 0.15 rad/s，参数绝对值限制 0.5，滑台行程 ±2.5 m。可通过 `/fixture/<name>/linear_velocity` 与 `/fixture/<name>/angular_velocity` 的 std_msgs/Float64 命令控制；该入口仅是验证夹具，不替代父项目控制器。一次只支持一个雷达，不能与多实例 sensors_file 同时启用。
+
+动态 TF 的 world→slide、slide→platform 来自关节反馈；platform→雷达固定外参由 URDF 定义。扫描仍是一帧一个位姿，不含逐点时间或畸变补偿。运动验收将点云按独立关节反馈还原到测试墙面，并核对陀螺仪和向心加速度；这不是对任意动作的全面物理校准。
+
+## Avia 预览
+
+`model:=avia name:=avia` 复用同一插件、挂载宏与桥接代码，选择不同配置和预设。Avia 使用型号专用的盒体／前窗近似，不复用 MID-360 圆罩。非重复模式、单几何返回、10 Hz／24000 射线，其他模式明确未实现。原点、IMU 外参、惯量和精细外观限制见支持矩阵。
+
 ## 多实例演示配置
 
 `demo.launch.py sensors_file:=/path/to/sensors.yaml` 可在同一世界放置多个固定传感器。文件仅包含 `sensors` 列表，每项支持 model、name、namespace、xyz、rpy、visual_mesh 和 mesh_rpy，单位仍为米／弧度。完整示例为 `config/demos/dual_mid360.yaml`。
@@ -82,4 +96,4 @@ sensors:
 
 各实例分别使用 robot_state_publisher 和传感器桥接，只有第一路桥接时钟。所有传感器从一开始就写入初始世界，支持全场景复位。demo 将描述话题隔离到 `/<namespace>/<name>/robot_description`，RViz 配置随实例列表生成模型和点云显示项。父项目自有 robot_state_publisher 不需要采用此 demo 话题约定。
 
-这是一种固定安装验证场景，不是整机运动控制器。不要在该 demo 中任意移动雷达模型后继续信任其静态 TF；真实移动机器人由父项目维护动态 TF，本轮仅验证了障碍物离散改位后的稳定扫描结果。
+此多实例入口是一种固定安装验证场景，不是整机运动控制器。不要任意移动静态模型后继续信任其固定 TF；运动验证使用前述 `moving:=true` 单实例入口，真实移动机器人由父项目维护动态 TF。

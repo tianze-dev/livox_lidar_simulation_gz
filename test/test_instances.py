@@ -29,7 +29,7 @@ def test_reject_invalid_pose(value):
     {'sensors': []}, {'sensors': 'front'}, {'other': []},
     {'sensors': [{'name': 'x'}, {'name': 'x', 'namespace': 'another'}]},
     {'sensors': [{'name': 'x', 'rate_typo': 10}]},
-    {'sensors': [{'name': 1}]}, {'sensors': [{'model': 'avia'}]},
+    {'sensors': [{'name': 1}]}, {'sensors': [{'model': 'hap'}]},
 ])
 def test_reject_invalid_instance_file(tmp_path, data):
     path = tmp_path / 'sensors.yaml'

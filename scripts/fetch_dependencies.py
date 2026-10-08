@@ -4,11 +4,13 @@
 import argparse
 import hashlib
 import json
+import platform
 from pathlib import Path
 import shutil
 import sys
 import tempfile
 import urllib.request
+import urllib.error
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -72,10 +74,12 @@ def main():
     parser.add_argument('--cache-dir', type=Path, default=ROOT / '.deps' / 'rgl')
     parser.add_argument('--offline', action='store_true')
     args = parser.parse_args()
+    if platform.system() != 'Linux' or platform.machine() not in ('x86_64', 'AMD64'):
+        parser.error('The locked RGL runtime supports Linux x86_64 only')
     lock = json.loads((ROOT / 'dependencies' / 'lock.json').read_text())
     try:
         prepare(args.cache_dir.resolve(), lock, args.offline)
-    except (OSError, ValueError, RuntimeError, zipfile.BadZipFile) as error:
+    except (OSError, ValueError, RuntimeError, zipfile.BadZipFile, urllib.error.URLError) as error:
         print(f'Dependency preparation failed: {error}', file=sys.stderr)
         return 1
     return 0

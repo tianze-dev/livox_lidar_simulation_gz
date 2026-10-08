@@ -20,7 +20,7 @@ for tool in cmake c++ colcon ros2 gz python3 timeout; do
 done
 
 if command -v ros2 >/dev/null 2>&1; then
-  for package in ament_cmake ament_cmake_python gz_cmake_vendor gz_plugin_vendor gz_sim_vendor gz_msgs_vendor ros_gz_sim ros_gz_bridge xacro robot_state_publisher rviz2; do
+  for package in ament_cmake ament_cmake_python gz_cmake_vendor gz_plugin_vendor gz_sim_vendor gz_msgs_vendor gz_tools_vendor sdformat_vendor ros_gz_bridge xacro robot_state_publisher rviz2; do
     if ros2 pkg prefix "$package" >/dev/null 2>&1; then
       echo "OK: ROS package $package"
     else

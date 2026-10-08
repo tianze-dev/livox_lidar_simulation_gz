@@ -2,7 +2,7 @@
 
 基于 RGL 的非官方 Livox 多型号 Gazebo／ROS 2 仿真套件。独立维护通用传感器功能，父项目通过 Git 子模块接入，不依赖任何哨兵或无人机工作空间。
 
-当前为 **MID-360 开发版**，不是正式开源发行版。已提供独立 ROS 包、GPU 快照扫描、PointCloud2／IMU、Xacro 挂载宏、精细彩色模型、独立演示与无界面测试。其他型号尚未接入。验证记录见 [VALIDATION](docs/VALIDATION.md)，接入方式见 [INTEGRATION](docs/INTEGRATION.md)，模型来源与坐标依据见 [模型说明](meshes/mid360/NOTICE.md)。
+当前为 **0.1.0 首版检阅候选**，尚未公开发布。MID-360 提供精细模型与名义外参；Avia 提供非重复扫描／标准接口预览和近似外观。已包含静态、双实例和移动滑台演示。请先阅读 [首版检阅清单](docs/RELEASE_REVIEW.md) 与 [支持矩阵](docs/SUPPORT.md)。另见 [English](README.en.md)、[验证记录](docs/VALIDATION.md)、[接入说明](docs/INTEGRATION.md)、[模型来源](meshes/mid360/NOTICE.md)。
 
 ## 环境与构建
 
@@ -32,9 +32,15 @@ ros2 launch livox_lidar_simulation_gz demo.launch.py
 ros2 launch livox_lidar_simulation_gz demo.launch.py gui:=false rviz:=false
 # 在 RViz 中近距离查看精细模型（隐藏点云，仍正常发布）：
 ros2 launch livox_lidar_simulation_gz demo.launch.py model_view:=true
+# 移动滑台／转台，动态 TF 来自实际 Gazebo 关节反馈：
+bash scripts/run.sh moving:=true
+# Avia 扫描／接口预览：
+bash scripts/run.sh model:=avia name:=avia
 ```
 
-演示包含地面、已知位置的墙面和静止雷达。单实例参数：`model`（目前仅 mid360）、`name`、`namespace`、`xyz`、`rpy`、`visual_mesh`、`mesh_rpy`；公共参数为 `gui` 和 `rviz`。运行多个独立仿真时自行设置不同的 `GZ_PARTITION` 和 `ROS_DOMAIN_ID`；演示不会更改其他运行实例。
+默认演示包含地面、墙面和静止雷达。单实例参数：`model`（mid360／avia）、`name`、`namespace`、`xyz`、`rpy`、`visual_mesh`、`mesh_rpy`；公共参数为 `gui`、`rviz`、`model_view`。移动示例额外支持 `moving`、`linear_velocity`、`angular_velocity`，只允许一个传感器，滑台行程 ±2.5 m。运行多个独立仿真时自行设置不同 `GZ_PARTITION` 和 `ROS_DOMAIN_ID`；演示不修改其他实例。
+
+`scripts/run.sh` 在未指定环境变量时使用 ROS domain 119 和独立 Gazebo partition，避免默认混入 domain 0；已有显式设置会保留。直接使用 `ros2 launch` 则由使用者选择隔离环境。运行前确认目标 domain 没有实机或其他同话题实例。
 
 双雷达演示共用一个世界，使用不同的话题、TF 名称和安装朝向：
 
@@ -53,7 +59,7 @@ ros2 launch livox_lidar_simulation_gz demo.launch.py \
 | `/clock` | Clock | 来自 Gazebo，由 demo 桥接 |
 | `/tf_static` | TFMessage | demo 的 robot_state_publisher 发布 |
 
-每帧发射 20000 条射线，只输出命中点；输出点数随场景变化，不保证每帧 20000 个有效点。`intensity` 来自 Gazebo `laser_retro`，不是经过标定的 Livox 反射率。
+MID-360 每帧发射 20000 条射线，Avia 为 24000 条，只输出命中点；输出点数随场景变化。`intensity` 来自 Gazebo `laser_retro`，不是经过标定的 Livox 反射率。
 
 ## 验证
 
@@ -64,6 +70,10 @@ ctest --test-dir build/livox_lidar_simulation_gz --output-on-failure
 python3 test/smoke_runtime.py
 # 双雷达、障碍物改位、暂停／单步／复位：
 python3 test/multi_runtime.py
+# 全套首版检查入口：
+bash scripts/check.sh --gpu
+bash scripts/check.sh --endurance
+python3 scripts/release_check.py
 ```
 
 运行测试创建独立 Gazebo partition，检查实际点云／IMU、时钟、TF、墙面几何及复位恢复，结束后仅清理它启动的进程。默认 ROS domain 单实例为 117、双实例为 118，可设置其他未使用的 `ROS_DOMAIN_ID`。日志与结果写入被忽略的 `run/`，GPU 测试不自动加入普通 CTest。
@@ -79,7 +89,7 @@ python3 test/multi_runtime.py
 - 快照扫描，不模拟逐点时间或帧内运动畸变。CustomMsg、FAST-LIVO2 和 CSV 转换继续暂缓。
 - 精细模型已校正安装轴向与尺寸；雷达原点和 IMU 外参采用官方手册名义值，不是逐台实物标定。惯量仍为均匀长方体近似，外观材质不是光学标定。`visual_mesh` 可接收自定义网格，但其原点和轴向需自行核验。
 - 默认量程是 0.1–40 m 固定裁剪，不模拟反射率依赖探测概率、硬件噪声、限幅或多回波；IMU 当前为理想 Gazebo 输出。
-- 双 MID-360 的并行输出、话题／TF 隔离、障碍物改位后的稳定几何、暂停／步进／复位已通过本机测试。超过两台的运行规模、连续运动误差和移动雷达动态 TF 尚未验收；demo 的传感器安装是固定的。
+- 双实例的话题／TF 隔离、障碍物改位、暂停／步进／复位，以及移动滑台的点云／关节反馈／动态 TF／理想 IMU 已通过限定场景测试。移动演示不是导航或定位算法，不代表任意机器人运动精度。
 - RGL 当前共用场景会排除所有已注册雷达自身链接的外观，不能用于验证雷达外壳之间的相互遮挡。
 - 本机 Gazebo／RViz 的精细模型与材质已做视觉检查；异机、其他渲染后端和全系列仍须继续验收，不能宣称实机等效。
 
@@ -87,4 +97,4 @@ python3 test/multi_runtime.py
 
 直接在 `main` 开发。见 [贡献规范](CONTRIBUTING.md)、[开发计划](DEVELOPMENT_PLAN.md) 和 [历史准备记录](docs/DEVELOPMENT_READINESS.md)。
 
-本项目不代表 Livox 或 Robotec 官方发布。[LICENSE](LICENSE) 目前仅记录项目总许可待确认状态，不是正式开源授权。已引入的 RGL 文件保留其 Apache-2.0 许可，模型、数据和二进制发行条件分别登记于 [第三方来源清单](THIRD_PARTY_NOTICES.md)。未经确认不公开发布。
+本项目不代表 Livox 或 Robotec 官方发布。原创代码按所有者选择采用 [Apache-2.0](LICENSE)；[NOTICE](NOTICE) 和 [第三方来源清单](THIRD_PARTY_NOTICES.md) 保留上游与模型的独立说明，不把品牌／CAD 统一宣称为本项目原创。远程仓库、正式标签和发布仍需检阅确认。排错见 [TROUBLESHOOTING](docs/TROUBLESHOOTING.md)。

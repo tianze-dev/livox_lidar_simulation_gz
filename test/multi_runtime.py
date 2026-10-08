@@ -22,11 +22,13 @@ from sensor_msgs_py import point_cloud2
 from tf2_msgs.msg import TFMessage
 
 from smoke_runtime import stamp_seconds
+from livox_lidar_simulation_gz.configuration import load_model, load_sensors
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=Path('run/multi'))
+    parser.add_argument('--mixed', action='store_true', help='Test MID-360 and Avia together')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     os.environ['GZ_PARTITION'] = 'livox_multi_' + uuid.uuid4().hex
@@ -34,7 +36,10 @@ def main():
     os.environ.setdefault('ROS_DOMAIN_ID', '118')
     rclpy.init()
     node = rclpy.create_node('livox_multi_' + uuid.uuid4().hex[:8])
-    names = {'front': '/robot_a/front', 'side': '/robot_b/side'}
+    share = Path(get_package_share_directory('livox_lidar_simulation_gz'))
+    profile = share / 'config/demos' / ('mixed.yaml' if args.mixed else 'dual_mid360.yaml')
+    sensors = {item['name']: item for item in load_sensors(share, profile)}
+    names = {name: item['points_topic'].rsplit('/', 1)[0] for name, item in sensors.items()}
     clouds = {name: deque(maxlen=200) for name in names}
     imus = {name: deque(maxlen=1000) for name in names}
     counts = {name: 0 for name in names}
@@ -83,23 +88,23 @@ def main():
             assert imus[name][-1].header.frame_id == name + '_imu'
             assert cloud.point_step == 16 and len(cloud.data) == cloud.row_step * cloud.height
             points = point_cloud2.read_points_numpy(cloud, field_names=('x', 'y', 'z'))
-            assert 100 < len(points) <= 20000 and np.isfinite(points).all()
-            # front: identity rotation at x=0; side: yaw=pi/2 at x=1.
-            coordinate = points[:, 0] if name == 'front' else points[:, 1]
-            expected = world_x if name == 'front' else -(world_x - 1)
-            hits[name] = int(np.count_nonzero(np.abs(coordinate - expected) < 0.01))
-            assert hits[name] > 100, f'{name}: missing wall at {expected}'
+            maximum = load_model(share, sensors[name]['model'])['rays_per_frame']
+            assert 100 < len(points) <= maximum and np.isfinite(points).all()
+            x = float(sensors[name]['xyz'].split()[0])
+            yaw = float(sensors[name]['rpy'].split()[2])
+            projected_x = x + np.cos(yaw)*points[:, 0] - np.sin(yaw)*points[:, 1]
+            hits[name] = int(np.count_nonzero(np.abs(projected_x - world_x) < 0.01))
+            assert hits[name] > 100, f'{name}: missing world wall at {world_x}'
         return hits
 
     process = None
     report = {'passed': False}
     try:
-        share = Path(get_package_share_directory('livox_lidar_simulation_gz'))
         with (args.output / 'launch.log').open('w') as log:
             process = subprocess.Popen(
                 ['ros2', 'launch', 'livox_lidar_simulation_gz', 'demo.launch.py',
                  'gui:=false', 'rviz:=false',
-                 'sensors_file:=' + str(share / 'config/demos/dual_mid360.yaml')],
+                 'sensors_file:=' + str(profile)],
                 stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
             wait_for(lambda: all(counts[name] >= 8 and len(imus[name]) >= 80 for name in names)
                      and bool(clocks), 45)
@@ -109,8 +114,11 @@ def main():
                 assert {name + suffix for suffix in ('_body', '_lidar', '_imu')} <= frames.keys()
                 assert len(node.get_publishers_info_by_topic(names[name] + '/points')) == 1
             assert len(node.get_publishers_info_by_topic('/clock')) == 1, 'Duplicate clock bridge'
-            assert abs(frames['side_body'].transform.translation.x - 1) < 1e-6
-            assert abs(frames['side_body'].transform.rotation.z - np.sqrt(0.5)) < 1e-6
+            for name, sensor in sensors.items():
+                x = float(sensor['xyz'].split()[0])
+                yaw = float(sensor['rpy'].split()[2])
+                assert abs(frames[name+'_body'].transform.translation.x - x) < 1e-6
+                assert abs(frames[name+'_body'].transform.rotation.z - np.sin(yaw/2)) < 1e-6
             report['lidar_sim_hz'] = {}
             report['imu_sim_hz'] = {}
             for name in names:
@@ -178,4 +186,6 @@ def main():
 
 
 if __name__ == '__main__':
+    if not __debug__:
+        raise SystemExit('Validation requires assertions enabled; do not use Python -O')
     raise SystemExit(main())

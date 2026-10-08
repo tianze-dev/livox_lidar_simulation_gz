@@ -1,0 +1,16 @@
+Livox LiDAR Simulation for Gazebo
+Copyright 2026 livox_lidar_simulation_gz contributors
+
+Original project code is licensed under the Apache License, Version 2.0.
+This project is not an official release of Livox or Robotec.AI.
+
+Contains modified RGLGazeboPlugin code:
+Copyright 2022-2023 Robotec.AI and upstream contributors.
+Upstream license: third_party/rgl_gazebo/LICENSE.
+Source and modifications: third_party/rgl_gazebo/UPSTREAM.md.
+
+The MID-360 model, manufacturer names and markings are not claimed as original
+project property or blanket-relicensed by the root license. Model provenance,
+owner-confirmed redistribution basis and processing are in meshes/mid360/NOTICE.md.
+Scan patterns and downloaded runtimes have separate upstream provenance;
+see THIRD_PARTY_NOTICES.md. No endorsement by their respective owners is implied.

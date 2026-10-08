@@ -1,0 +1,13 @@
+.git
+.deps
+.cache
+.venv
+build
+install
+log
+run
+dist
+__pycache__
+*.pyc
+**/__pycache__
+**/*.pyc

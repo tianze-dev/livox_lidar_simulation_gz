@@ -1,6 +1,6 @@
 # 开发与贡献规范
 
-本项目是基于 RGL 的非官方 Livox 多型号 Gazebo／ROS 2 仿真套件。当前为 MID-360 基础开发版，功能范围见 [开发计划](DEVELOPMENT_PLAN.md)，实际验证状态见 [验证记录](docs/VALIDATION.md)。
+本项目是基于 RGL 的非官方 Livox 多型号 Gazebo／ROS 2 仿真套件。首版范围见 [支持矩阵](docs/SUPPORT.md)，检阅入口见 [首版清单](docs/RELEASE_REVIEW.md)，实际验证状态见 [验证记录](docs/VALIDATION.md)。
 
 ## 修改范围与上游复用
 
@@ -69,4 +69,4 @@ git diff --cached --check
 
 提交前检查完整暂存差异与新文件，确保不含无关改动。公开发布、创建远程仓库和推送需另行确认。
 
-当前 [LICENSE](LICENSE) 是许可状态说明，不是正式开源授权。引入第三方内容时更新 [第三方来源清单](THIRD_PARTY_NOTICES.md)，保留其适用声明；资产未明确授权前不进入公开发行包。
+原创代码使用 [Apache-2.0](LICENSE)。引入第三方内容时更新 [第三方来源清单](THIRD_PARTY_NOTICES.md)，保留其适用声明；资产未明确授权前不进入公开发行包。CPU CI 只运行构建／单元测试，不将缺少 GPU 的集成测试标为通过；GPU 验收单独执行 `scripts/check.sh --gpu`。

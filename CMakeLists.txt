@@ -30,17 +30,20 @@ install(TARGETS RGLServerPluginManager RGLServerPluginInstance
 install(IMPORTED_RUNTIME_ARTIFACTS RobotecGPULidar
   LIBRARY DESTINATION lib/${PROJECT_NAME}/rgl)
 install(FILES "${LIVOX_RGL_CACHE}/patterns/LivoxMid360.mat3x4f"
+  "${LIVOX_RGL_CACHE}/patterns/LivoxAvia.mat3x4f"
   DESTINATION share/${PROJECT_NAME}/patterns)
 ament_python_install_package(${PROJECT_NAME})
 install(DIRECTORY launch config urdf worlds rviz
   DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY meshes/ DESTINATION share/${PROJECT_NAME}/meshes
   PATTERN "*.blend" EXCLUDE)
-install(FILES README.md LICENSE THIRD_PARTY_NOTICES.md
+install(FILES README.md README.en.md LICENSE NOTICE THIRD_PARTY_NOTICES.md CONTRIBUTING.md
   DESTINATION share/${PROJECT_NAME})
 install(FILES third_party/rgl_gazebo/LICENSE third_party/rgl_gazebo/UPSTREAM.md
   DESTINATION share/${PROJECT_NAME}/third_party/rgl_gazebo)
+install(FILES third_party/livox_scan/LICENSE DESTINATION share/${PROJECT_NAME}/third_party/livox_scan)
 install(FILES dependencies/lock.json DESTINATION share/${PROJECT_NAME}/dependencies)
+install(DIRECTORY docs/ DESTINATION share/${PROJECT_NAME}/docs)
 ament_environment_hooks(hooks/livox_gz.dsv.in)
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)

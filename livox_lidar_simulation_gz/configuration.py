@@ -8,10 +8,10 @@ import yaml
 
 
 def load_model(share, model):
-    if model != 'mid360':
-        raise ValueError(f'Unsupported model: {model}; only mid360 is implemented')
+    if model not in ('mid360', 'avia'):
+        raise ValueError(f'Unsupported model: {model}; available: mid360, avia')
     config = yaml.safe_load((Path(share) / 'config/models' / f'{model}.yaml').read_text())
-    if config['model'] != model:
+    if config['model'] != model or config.get('schema_version') != 1:
         raise ValueError('Model/config mismatch')
     for key in ('lidar_rate', 'imu_rate', 'mass', 'size_x', 'size_y', 'size_z'):
         value = float(config[key])
@@ -20,6 +20,12 @@ def load_model(share, model):
     low, high = float(config['range_min']), float(config['range_max'])
     if not (math.isfinite(low) and math.isfinite(high) and 0 <= low < high):
         raise ValueError('Invalid range')
+    for key in ('imu_xyz', 'imu_from_lidar_xyz'):
+        vector3(config[key], key)
+    if not 0 < config['measurement_z'] <= config['size_z']:
+        raise ValueError('Invalid measurement origin')
+    if config['rays_per_frame'] <= 0 or config['pattern_groups'] <= 0:
+        raise ValueError('Invalid pattern layout')
     return config
 
 

@@ -21,10 +21,12 @@
         <geometry><box size="${sx} ${sy} ${cfg['collision_body_height']}"/></geometry>
       </collision>
       <!-- Approximate connector envelope: manual width including connector is 73 mm. -->
+      <xacro:if value="${cfg['connector_collision']}">
       <collision name="${name}_connector_collision">
         <origin xyz="-0.0365 0 0.0143" rpy="0 1.5707963267948966 0"/>
         <geometry><cylinder radius="0.0062" length="0.008"/></geometry>
       </collision>
+      </xacro:if>
     </link>
     <joint name="${name}_mount" type="fixed">
       <parent link="${parent}"/><child link="${name}_body"/>
@@ -40,6 +42,7 @@
         </visual>
       </xacro:if>
       <xacro:unless value="${actual_mesh != ''}">
+        <xacro:if value="${cfg['visual_style'] == 'dome'}">
         <visual name="${name}_base_visual">
           <origin xyz="0 0 ${sz * 0.28 - cfg['measurement_z']}"/>
           <geometry><box size="${sx} ${sy} ${sz * 0.56}"/></geometry>
@@ -50,6 +53,19 @@
           <geometry><cylinder radius="${sx * 0.44}" length="${sz * 0.48}"/></geometry>
           <material name="${name}_blue"><color rgba="0.05 0.23 0.3 1"/></material>
         </visual>
+        </xacro:if>
+        <xacro:if value="${cfg['visual_style'] == 'front_window'}">
+          <visual name="${name}_housing">
+            <origin xyz="0 0 ${sz/2-cfg['measurement_z']}"/>
+            <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
+            <material name="${name}_silver"><color rgba="0.65 0.68 0.72 1"/></material>
+          </visual>
+          <visual name="${name}_window">
+            <origin xyz="${sx/2+0.0001} 0 ${sz/2-cfg['measurement_z']}"/>
+            <geometry><box size="0.0001 ${sy*.85} ${sz*.7}"/></geometry>
+            <material name="${name}_window_black"><color rgba="0.02 0.025 0.035 1"/></material>
+          </visual>
+        </xacro:if>
       </xacro:unless>
     </link>
     <joint name="${name}_lidar_joint" type="fixed">

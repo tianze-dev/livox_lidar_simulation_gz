@@ -17,6 +17,11 @@
       "path": "patterns/LivoxMid360.mat3x4f",
       "url": "https://raw.githubusercontent.com/RobotecAI/RGLGazeboPlugin/d4bf3cf36fe4a363a56df1bec2ce3809720db563/lidar_patterns/LivoxMid360.mat3x4f",
       "sha256": "d7b3322f303f9a83268180931e730b5f361592ef1ab6f1d56c166aadf47153fd"
+    },
+    {
+      "path": "patterns/LivoxAvia.mat3x4f",
+      "url": "https://raw.githubusercontent.com/RobotecAI/RGLGazeboPlugin/d4bf3cf36fe4a363a56df1bec2ce3809720db563/lidar_patterns/LivoxAvia.mat3x4f",
+      "sha256": "5e16715d655ae7e6f6e05daaccd0186c0e03cdd3a9ad47d11c696136189904b4"
     }
   ],
   "library": {

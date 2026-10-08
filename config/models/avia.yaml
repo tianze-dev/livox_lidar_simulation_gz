@@ -1,0 +1,29 @@
+# https://www.livoxtech.com/avia/specs
+# Preview model only: housing dimensions/mass and scan data are sourced;
+# mounting/measurement/IMU origins are explicit geometric approximations.
+schema_version: 1
+model: avia
+visual_style: front_window
+connector_collision: false
+pattern: Livox Avia
+pattern_file: LivoxAvia.mat3x4f
+pattern_groups: 40
+rays_per_frame: 24000
+lidar_rate: 10.0
+imu_rate: 200.0
+range_min: 0.1
+range_max: 190.0
+mass: 0.498
+size_x: 0.0612
+size_y: 0.091
+size_z: 0.0648
+measurement_z: 0.0324
+imu_xyz: [0, 0, 0.0324]
+imu_from_lidar_xyz: [0, 0, 0]
+visual_mesh: ''
+collision_body_height: 0.0648
+geometry_status: model_specific_primitive_preview
+inertia_status: uniform_box_approximation
+imu_extrinsics_status: uncalibrated_approximation
+intensity_semantics: gazebo_laser_retro_not_hardware_reflectivity
+range_semantics: fixed_cutoff_not_reflectivity_dependent_detection

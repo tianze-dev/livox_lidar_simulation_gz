@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="livox_moving_fixture">
+  <xacro:arg name="model" default="mid360"/><xacro:arg name="name" default="mid360"/>
+  <xacro:arg name="xyz" default="0 0 1"/><xacro:arg name="rpy" default="0 0 0"/>
+  <xacro:arg name="points_topic" default="/livox/mid360/points"/>
+  <xacro:arg name="imu_topic" default="/livox/mid360/imu"/>
+  <xacro:arg name="visual_mesh" default=""/><xacro:arg name="mesh_rpy" default="0 0 0"/>
+  <xacro:arg name="linear_velocity" default="0.1"/><xacro:arg name="angular_velocity" default="0.15"/>
+  <xacro:property name="name" value="$(arg name)"/>
+  <xacro:include filename="$(find livox_lidar_simulation_gz)/urdf/livox.xacro"/>
+  <link name="world"/>
+  <link name="${name}_slide">
+    <inertial><mass value="0.1"/><inertia ixx="0.001" iyy="0.001" izz="0.001" ixy="0" ixz="0" iyz="0"/></inertial>
+  </link>
+  <joint name="${name}_translation" type="prismatic">
+    <parent link="world"/><child link="${name}_slide"/><origin xyz="$(arg xyz)"/>
+    <axis xyz="1 0 0"/><limit lower="-2.5" upper="2.5" effort="1000" velocity="0.5"/>
+  </joint>
+  <link name="${name}_platform">
+    <inertial><origin xyz="0 0 -0.1"/><mass value="1"/><inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/></inertial>
+    <visual><origin xyz="0 0 -0.1"/><geometry><box size="0.25 0.2 0.05"/></geometry><material name="platform"><color rgba="0.3 0.4 0.5 1"/></material></visual>
+    <collision><origin xyz="0 0 -0.1"/><geometry><box size="0.25 0.2 0.05"/></geometry></collision>
+  </link>
+  <joint name="${name}_rotation" type="continuous">
+    <parent link="${name}_slide"/><child link="${name}_platform"/><axis xyz="0 0 1"/>
+    <limit effort="1000" velocity="0.5"/>
+  </joint>
+  <xacro:livox_lidar parent="${name}_platform" name="${name}" model="$(arg model)" rpy="$(arg rpy)"
+    points_topic="$(arg points_topic)" imu_topic="$(arg imu_topic)" visual_mesh="$(arg visual_mesh)" mesh_rpy="$(arg mesh_rpy)"/>
+  <gazebo>
+    <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
+      <joint_name>${name}_translation</joint_name><topic>/fixture/${name}/linear_velocity</topic><initial_velocity>$(arg linear_velocity)</initial_velocity>
+    </plugin>
+    <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
+      <joint_name>${name}_rotation</joint_name><topic>/fixture/${name}/angular_velocity</topic><initial_velocity>$(arg angular_velocity)</initial_velocity>
+    </plugin>
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <joint_name>${name}_translation</joint_name><joint_name>${name}_rotation</joint_name>
+      <topic>/fixture/${name}/joint_states</topic><update_rate>200</update_rate>
+    </plugin>
+  </gazebo>
+</robot>

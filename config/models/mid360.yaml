@@ -1,6 +1,9 @@
 # Source: https://www.livoxtech.com/mid-360/specs
 # Coordinates: official User Manual v1.2 (2024.04), printed pages 12, 15, 19.
+schema_version: 1
 model: mid360
+visual_style: dome
+connector_collision: true
 pattern: Livox Mid360
 pattern_file: LivoxMid360.mat3x4f
 pattern_groups: 40

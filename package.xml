@@ -3,8 +3,9 @@
   <name>livox_lidar_simulation_gz</name>
   <version>0.1.0</version>
   <description>Unofficial standalone Livox simulation suite using RGL and Gazebo Harmonic.</description>
-  <maintainer email="maintainer@example.com">Project maintainers (pending release confirmation)</maintainer>
-  <license>LicenseRef-Pending</license>
+  <!-- Local review default from Git identity; owner confirms before public publication. -->
+  <maintainer email="junxiangz0717@gmail.com">Junxiang Zhang</maintainer>
+  <license>Apache-2.0</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
   <build_depend>gz_cmake_vendor</build_depend>
@@ -14,7 +15,8 @@
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
-  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>gz_tools_vendor</exec_depend>
+  <exec_depend>sdformat_vendor</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rviz2</exec_depend>
@@ -22,6 +24,7 @@
   <exec_depend>python3-yaml</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>rosgraph_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>rclpy</test_depend>
   <test_depend>sensor_msgs_py</test_depend>

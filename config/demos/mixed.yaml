@@ -1,0 +1,3 @@
+sensors:
+  - {model: mid360, name: mid360, namespace: livox, xyz: [0, -0.5, 1]}
+  - {model: avia, name: avia, namespace: livox, xyz: [0, 0.5, 1]}

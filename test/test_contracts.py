@@ -24,7 +24,7 @@ def test_model_contract():
     assert model['pattern_groups'] == 40
 
 
-@pytest.mark.parametrize('model', ['avia', '../mid360', '', 'MID360'])
+@pytest.mark.parametrize('model', ['hap', '../mid360', '', 'MID360'])
 def test_unknown_model_is_rejected(model):
     with pytest.raises(ValueError):
         load_model(ROOT, model)
