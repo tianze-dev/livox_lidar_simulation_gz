@@ -2,7 +2,7 @@
 
 基于 RGL 的非官方 Livox 多型号 Gazebo／ROS 2 仿真套件。独立维护通用传感器功能，父项目通过 Git 子模块接入，不依赖任何哨兵或无人机工作空间。
 
-当前为 **MID-360 基础开发版**，不是正式开源发行版。已提供独立 ROS 包、GPU 快照扫描、PointCloud2／IMU、Xacro 挂载宏、独立演示与无界面测试。外观使用明确标注的简化模型，精细网格分发与其他型号尚未完成。验证记录见 [VALIDATION](docs/VALIDATION.md)，接入方式见 [INTEGRATION](docs/INTEGRATION.md)。
+当前为 **MID-360 开发版**，不是正式开源发行版。已提供独立 ROS 包、GPU 快照扫描、PointCloud2／IMU、Xacro 挂载宏、精细彩色模型、独立演示与无界面测试。其他型号尚未接入。验证记录见 [VALIDATION](docs/VALIDATION.md)，接入方式见 [INTEGRATION](docs/INTEGRATION.md)，模型来源与坐标依据见 [模型说明](meshes/mid360/NOTICE.md)。
 
 ## 环境与构建
 
@@ -30,6 +30,8 @@ source install/local_setup.bash
 ros2 launch livox_lidar_simulation_gz demo.launch.py
 # 无界面：
 ros2 launch livox_lidar_simulation_gz demo.launch.py gui:=false rviz:=false
+# 在 RViz 中近距离查看精细模型（隐藏点云，仍正常发布）：
+ros2 launch livox_lidar_simulation_gz demo.launch.py model_view:=true
 ```
 
 演示包含地面、已知位置的墙面和静止雷达。单实例参数：`model`（目前仅 mid360）、`name`、`namespace`、`xyz`、`rpy`、`visual_mesh`、`mesh_rpy`；公共参数为 `gui` 和 `rviz`。运行多个独立仿真时自行设置不同的 `GZ_PARTITION` 和 `ROS_DOMAIN_ID`；演示不会更改其他运行实例。
@@ -42,7 +44,7 @@ ros2 launch livox_lidar_simulation_gz demo.launch.py \
   gui:=false rviz:=false
 ```
 
-指定 `sensors_file` 后，实例 YAML 替代单实例参数。名称必须全局唯一，即使 namespace 不同也不能重名；启动前会拒绝未知字段和非有限位姿。多实例 demo 只桥接一次 `/clock`，RViz 配置会为每路点云生成独立显示项（配置已测试，GUI 视觉尚未验收）。
+指定 `sensors_file` 后，实例 YAML 替代单实例参数。名称必须全局唯一，即使 namespace 不同也不能重名；启动前会拒绝未知字段和非有限位姿。多实例 demo 只桥接一次 `/clock`，RViz 为每路点云和模型生成独立显示项。`model_view:=true` 聚焦第一台模型，`visual_mesh:=primitive` 可切回简化外观；不指定 visual_mesh 时使用内置精细 DAE。
 
 | 默认话题 | 类型 | 仿真时间频率与坐标 |
 |---|---|---|
@@ -75,11 +77,11 @@ python3 test/multi_runtime.py
 ## 已知边界
 
 - 快照扫描，不模拟逐点时间或帧内运动畸变。CustomMsg、FAST-LIVO2 和 CSV 转换继续暂缓。
-- 外观为按外形尺寸制作的几何近似，惯量为均匀长方体近似，测量原点与 IMU 外参未标定。`visual_mesh` 可接收显式提供的网格，但格式、原点和轴向需核验。
+- 精细模型已校正安装轴向与尺寸；雷达原点和 IMU 外参采用官方手册名义值，不是逐台实物标定。惯量仍为均匀长方体近似，外观材质不是光学标定。`visual_mesh` 可接收自定义网格，但其原点和轴向需自行核验。
 - 默认量程是 0.1–40 m 固定裁剪，不模拟反射率依赖探测概率、硬件噪声、限幅或多回波；IMU 当前为理想 Gazebo 输出。
 - 双 MID-360 的并行输出、话题／TF 隔离、障碍物改位后的稳定几何、暂停／步进／复位已通过本机测试。超过两台的运行规模、连续运动误差和移动雷达动态 TF 尚未验收；demo 的传感器安装是固定的。
 - RGL 当前共用场景会排除所有已注册雷达自身链接的外观，不能用于验证雷达外壳之间的相互遮挡。
-- GUI／RViz 显示、精细彩色网格和异机安装仍须继续验收；不能以这些测试宣称全系列或实机等效。
+- 本机 Gazebo／RViz 的精细模型与材质已做视觉检查；异机、其他渲染后端和全系列仍须继续验收，不能宣称实机等效。
 
 ## 开发与许可
 

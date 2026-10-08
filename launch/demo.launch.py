@@ -28,6 +28,7 @@ def _setup(context):
     gz_launch = Path(get_package_share_directory('ros_gz_sim')) / 'launch/gz_sim.launch.py'
     gui = boolean(value('gui'))
     rviz = boolean(value('rviz'))
+    model_view = boolean(value('model_view'))
     directory, world_path = prepare_demo_worlds(
         share, [(sensor['name'], description) for sensor, description in zip(sensors, descriptions)])
 
@@ -49,6 +50,7 @@ def _setup(context):
         actions.extend([
             Node(package='robot_state_publisher', executable='robot_state_publisher',
                  name=sensor['name'] + '_state_publisher', namespace=sensor['namespace'],
+                 remappings=[('robot_description', sensor['name'] + '/robot_description')],
                  parameters=[{'robot_description': description, 'use_sim_time': True}], output='screen'),
             IncludeLaunchDescription(PythonLaunchDescriptionSource(str(share / 'launch/sensor.launch.py')),
                                      launch_arguments={'model': sensor['model'], 'name': sensor['name'],
@@ -57,7 +59,7 @@ def _setup(context):
         ])
     if rviz:
         actions.append(Node(package='rviz2', executable='rviz2',
-                            arguments=['-d', str(prepare_rviz(share, directory.name, sensors))],
+                            arguments=['-d', str(prepare_rviz(share, directory.name, sensors, model_view))],
                             parameters=[{'use_sim_time': True}], output='screen'))
     return actions
 
@@ -73,6 +75,8 @@ def generate_launch_description():
                               description='Optional instance YAML; overrides single-sensor arguments.'),
         DeclareLaunchArgument('gui', default_value='true'),
         DeclareLaunchArgument('rviz', default_value='true'),
+        DeclareLaunchArgument('model_view', default_value='false',
+                              description='RViz close-up of the first sensor; hides point clouds.'),
         DeclareLaunchArgument('visual_mesh', default_value=''),
         DeclareLaunchArgument('mesh_rpy', default_value='0 0 0'),
         OpaqueFunction(function=_setup),

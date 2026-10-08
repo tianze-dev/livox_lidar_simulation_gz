@@ -6,6 +6,7 @@
     <xacro:property name="sx" value="${cfg['size_x']}"/>
     <xacro:property name="sy" value="${cfg['size_y']}"/>
     <xacro:property name="sz" value="${cfg['size_z']}"/>
+    <xacro:property name="actual_mesh" value="${cfg['visual_mesh'] if visual_mesh == '' else ('' if visual_mesh == 'primitive' else visual_mesh)}"/>
     <!-- Tiny numerical frame masses keep fixed sensor links in Gazebo's URDF conversion. -->
     <xacro:property name="frame_mass" value="0.000001"/>
     <xacro:property name="mass" value="${cfg['mass'] - 2 * frame_mass}"/>
@@ -16,8 +17,13 @@
         <inertia ixx="${mass * (sy*sy + sz*sz) / 12}" iyy="${mass * (sx*sx + sz*sz) / 12}" izz="${mass * (sx*sx + sy*sy) / 12}" ixy="0" ixz="0" iyz="0"/>
       </inertial>
       <collision name="${name}_collision">
-        <origin xyz="0 0 ${sz / 2}"/>
-        <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
+        <origin xyz="0 0 ${cfg['collision_body_height'] / 2}"/>
+        <geometry><box size="${sx} ${sy} ${cfg['collision_body_height']}"/></geometry>
+      </collision>
+      <!-- Approximate connector envelope: manual width including connector is 73 mm. -->
+      <collision name="${name}_connector_collision">
+        <origin xyz="-0.0365 0 0.0143" rpy="0 1.5707963267948966 0"/>
+        <geometry><cylinder radius="0.0062" length="0.008"/></geometry>
       </collision>
     </link>
     <joint name="${name}_mount" type="fixed">
@@ -27,13 +33,13 @@
     <link name="${name}_lidar">
       <inertial><mass value="${frame_mass}"/><inertia ixx="1e-9" iyy="1e-9" izz="1e-9" ixy="0" ixz="0" iyz="0"/></inertial>
       <!-- RGL excludes visuals in the sensor's own link, not the whole robot. -->
-      <xacro:if value="${visual_mesh != ''}">
+      <xacro:if value="${actual_mesh != ''}">
         <visual name="${name}_external_mesh">
           <origin xyz="0 0 ${-cfg['measurement_z']}" rpy="${mesh_rpy}"/>
-          <geometry><mesh filename="${visual_mesh}"/></geometry>
+          <geometry><mesh filename="${actual_mesh}"/></geometry>
         </visual>
       </xacro:if>
-      <xacro:unless value="${visual_mesh != ''}">
+      <xacro:unless value="${actual_mesh != ''}">
         <visual name="${name}_base_visual">
           <origin xyz="0 0 ${sz * 0.28 - cfg['measurement_z']}"/>
           <geometry><box size="${sx} ${sy} ${sz * 0.56}"/></geometry>
@@ -55,7 +61,7 @@
     </link>
     <joint name="${name}_imu_joint" type="fixed">
       <parent link="${name}_body"/><child link="${name}_imu"/>
-      <origin xyz="0 0 ${cfg['imu_z']}"/>
+      <origin xyz="${cfg['imu_xyz'][0]} ${cfg['imu_xyz'][1]} ${cfg['imu_xyz'][2]}"/>
     </joint>
     <gazebo reference="${name}_lidar_joint"><preserveFixedJoint>true</preserveFixedJoint></gazebo>
     <gazebo reference="${name}_imu_joint"><preserveFixedJoint>true</preserveFixedJoint></gazebo>

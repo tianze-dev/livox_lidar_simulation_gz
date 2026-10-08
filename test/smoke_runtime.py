@@ -85,7 +85,9 @@ def main():
             assert {'mid360_body', 'mid360_lidar', 'mid360_imu'} <= frames.keys(), 'Missing static TF'
             assert frames['mid360_body'].header.frame_id == 'world'
             assert abs(frames['mid360_body'].transform.translation.z - 1.0) < 1e-6
-            assert abs(frames['mid360_lidar'].transform.translation.z - 0.035) < 1e-6
+            assert abs(frames['mid360_lidar'].transform.translation.z - 0.047) < 1e-6
+            imu_position = frames['mid360_imu'].transform.translation
+            assert np.allclose([imu_position.x, imu_position.y, imu_position.z], [0.011, 0.02329, 0.00288])
             report.update(passed=True, clouds=len(clouds), imus=len(imus), clocks=len(clocks),
                           points_last_frame=len(points), front_wall_points=int(np.count_nonzero(front)),
                           lidar_sim_hz=1 / float(np.median(steps)),

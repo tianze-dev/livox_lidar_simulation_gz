@@ -34,6 +34,8 @@ install(FILES "${LIVOX_RGL_CACHE}/patterns/LivoxMid360.mat3x4f"
 ament_python_install_package(${PROJECT_NAME})
 install(DIRECTORY launch config urdf worlds rviz
   DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY meshes/ DESTINATION share/${PROJECT_NAME}/meshes
+  PATTERN "*.blend" EXCLUDE)
 install(FILES README.md LICENSE THIRD_PARTY_NOTICES.md
   DESTINATION share/${PROJECT_NAME})
 install(FILES third_party/rgl_gazebo/LICENSE third_party/rgl_gazebo/UPSTREAM.md

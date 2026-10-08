@@ -20,15 +20,15 @@
   imu_topic="/robot/front_lidar/imu"/>
 ```
 
-安装参考为简化外壳底面中心，米／弧度。此处位姿只是示例，不是机器人的标定值。名称生成 `front_lidar_body`、`front_lidar_lidar`、`front_lidar_imu` 等 frame；多雷达必须使用全局不冲突的 `name`，ROS namespace 本身不会给 TF frame 加前缀。
+安装参考为外壳底面中心，米／弧度。此处位姿只是示例，不是机器人的标定值。名称生成 `front_lidar_body`、`front_lidar_lidar`、`front_lidar_imu` 等 frame；多雷达必须使用全局不冲突的 `name`，ROS namespace 本身不会给 TF frame 加前缀。
 
-Xacro 和 launch 都读取安装包的 `config/models/mid360.yaml`。默认外观为几何体，碰撞为盒体；标称总质量 0.265 kg，采用均匀盒体惯量及极小的数值传感器链接质量，不是 CAD 标定惯性。测量中心和 IMU 中心暂近似设在底面以上 0.035 m。
+Xacro 和 launch 都读取安装包的 `config/models/mid360.yaml`。默认外观为内置精细 DAE，碰撞为主体盒体加接口圆柱；标称总质量 0.265 kg，仍采用均匀盒体惯量及极小的数值传感器链接质量，不是 CAD 标定惯性。测量中心位于安装原点以上 0.047 m，IMU 相对安装原点为 `(0.011, 0.02329, 0.00288)` m，轴向一致，采用官方手册名义外参。来源、变换和尺寸报告见 [模型说明](../meshes/mid360/NOTICE.md)。
 
 雷达外观位于其传感器链接下，由 RGL 自链接过滤排除，避免外壳遮挡所有射线；机器人其他部件仍参与遮挡。碰撞体用于物理碰撞，RGL 求交使用场景可视几何。
 
 多实例使用共用 RGL 场景，所有已注册雷达自身链接的外观都会被排除，因此本实现不会模拟雷达外壳之间的相互遮挡。普通机器人部件不受此例外影响。
 
-可选 `visual_mesh` 指定使用者自己的网格 URI，`mesh_rpy` 调整网格朝向。网格应采用米单位且以安装参考为原点；只替换外观，不自动推断尺寸、碰撞、质量或测量原点，也不自动赋予分发权。
+可选 `visual_mesh` 指定使用者自己的网格 URI，`mesh_rpy` 调整网格朝向。不指定时使用内置 DAE，特殊值 `primitive` 使用简化几何体。网格应采用米单位且以安装参考为原点；只替换外观，不自动推断尺寸、碰撞、质量或测量原点，也不自动赋予分发权。
 
 ## 世界插件
 
@@ -80,6 +80,6 @@ sensors:
 
 默认型号是 mid360。话题按 `/<namespace>/<name>/points` 和 `/<namespace>/<name>/imu` 生成；六个子 frame 使用 front／side 前缀，公共父 frame 为 world。重名即使跨 namespace 也会被拒绝。当前只实测了两个实例，不宣称任意数量实时运行。
 
-各实例分别使用 robot_state_publisher 和传感器桥接，只有第一路桥接时钟。所有传感器从一开始就写入初始世界，支持全场景复位。RViz 配置随实例列表生成，不再只显示默认话题。
+各实例分别使用 robot_state_publisher 和传感器桥接，只有第一路桥接时钟。所有传感器从一开始就写入初始世界，支持全场景复位。demo 将描述话题隔离到 `/<namespace>/<name>/robot_description`，RViz 配置随实例列表生成模型和点云显示项。父项目自有 robot_state_publisher 不需要采用此 demo 话题约定。
 
 这是一种固定安装验证场景，不是整机运动控制器。不要在该 demo 中任意移动雷达模型后继续信任其静态 TF；真实移动机器人由父项目维护动态 TF，本轮仅验证了障碍物离散改位后的稳定扫描结果。

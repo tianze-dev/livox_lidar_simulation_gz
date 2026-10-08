@@ -1,5 +1,5 @@
 # Source: https://www.livoxtech.com/mid-360/specs
-# Geometry/IMU origins below are explicit approximations, not CAD calibration.
+# Coordinates: official User Manual v1.2 (2024.04), printed pages 12, 15, 19.
 model: mid360
 pattern: Livox Mid360
 pattern_file: LivoxMid360.mat3x4f
@@ -13,10 +13,13 @@ mass: 0.265
 size_x: 0.065
 size_y: 0.065
 size_z: 0.060
-measurement_z: 0.035
-imu_z: 0.035
-geometry_status: simplified_approximation
+measurement_z: 0.047
+imu_xyz: [0.011, 0.02329, 0.00288]
+imu_from_lidar_xyz: [0.011, 0.02329, -0.04412]
+visual_mesh: package://livox_lidar_simulation_gz/meshes/mid360/mid360.dae
+collision_body_height: 0.0602
+geometry_status: detailed_mesh_registered_to_mount
 inertia_status: uniform_box_approximation
-imu_extrinsics_status: uncalibrated_approximation
+imu_extrinsics_status: official_manual_nominal_not_device_calibrated
 intensity_semantics: gazebo_laser_retro_not_hardware_reflectivity
 range_semantics: fixed_cutoff_not_reflectivity_dependent_detection

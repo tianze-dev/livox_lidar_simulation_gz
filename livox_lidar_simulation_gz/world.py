@@ -40,7 +40,7 @@ def prepare_demo_worlds(share, robots):
         raise
 
 
-def prepare_rviz(share, directory, sensors):
+def prepare_rviz(share, directory, sensors, focus_model=False):
     config = yaml.safe_load((Path(share) / 'rviz/demo.rviz').read_text())
     displays = config['Visualization Manager']['Displays']
     point_display = next(item for item in displays if item['Class'] == 'rviz_default_plugins/PointCloud2')
@@ -49,7 +49,24 @@ def prepare_rviz(share, directory, sensors):
         display = deepcopy(point_display)
         display['Name'] = sensor['name'] + ' points'
         display['Topic']['Value'] = sensor['points_topic']
+        display['Enabled'] = not focus_model
         displays.append(display)
+        displays.append({
+            'Class': 'rviz_default_plugins/RobotModel', 'Name': sensor['name'] + ' model',
+            'Enabled': True, 'Description Source': 'Topic',
+            'Description Topic': {'Value': sensor['points_topic'].rsplit('/', 1)[0] + '/robot_description',
+                                  'Durability Policy': 'Transient Local', 'Reliability Policy': 'Reliable',
+                                  'History Policy': 'Keep Last', 'Depth': 1},
+            'Visual Enabled': True, 'Collision Enabled': False, 'Alpha': 1.0,
+        })
+    if focus_model:
+        for display in displays:
+            if display['Class'] in ('rviz_default_plugins/Grid', 'rviz_default_plugins/TF'):
+                display['Enabled'] = False
+        x, y, z = map(float, sensors[0]['xyz'].split())
+        view = config['Visualization Manager']['Views']['Current']
+        view.update({'Distance': 0.18, 'Near Clip Distance': 0.001,
+                     'Focal Point': {'X': x, 'Y': y, 'Z': z + 0.03}})
     path = Path(directory) / 'demo.rviz'
     path.write_text(yaml.safe_dump(config, sort_keys=False))
     return path

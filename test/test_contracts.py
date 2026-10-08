@@ -20,7 +20,7 @@ spec.loader.exec_module(fetch)
 def test_model_contract():
     model = load_model(ROOT, 'mid360')
     assert model['rays_per_frame'] * model['lidar_rate'] == 200000
-    assert model['geometry_status'] == 'simplified_approximation'
+    assert model['geometry_status'] == 'detailed_mesh_registered_to_mount'
     assert model['pattern_groups'] == 40
 
 
@@ -92,9 +92,12 @@ def test_xacro_mount_and_sensor_contract(monkeypatch):
     assert sensor.get('type') == 'custom'
     assert sensor.find('plugin/frame').text == 'front_lidar'
     assert sensor.find('plugin/pattern_preset').text == 'Livox Mid360'
-    assert len(robot.findall('.//collision')) == 1
+    assert len(robot.findall('.//collision')) == 2
     assert not robot.findall("link[@name='front_body']/visual")
-    assert len(robot.findall("link[@name='front_lidar']/visual")) == 2
+    assert len(robot.findall("link[@name='front_lidar']/visual")) == 1
+    assert robot.find("link[@name='front_lidar']/visual/geometry/mesh").get('filename').endswith('mid360.dae')
+    assert robot.find("joint[@name='front_lidar_joint']/origin").get('xyz') == '0 0 0.047'
+    assert robot.find("joint[@name='front_imu_joint']/origin").get('xyz') == '0.011 0.02329 0.00288'
     assert sum(float(item.get('value')) for item in robot.findall('.//inertial/mass')) == pytest.approx(0.265)
     assert robot.find("gazebo[@reference='front_imu']/sensor/gz_frame_id").text == 'front_imu'
 
