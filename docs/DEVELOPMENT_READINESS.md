@@ -16,7 +16,7 @@
 | 哨兵提交 | `04c0c934d4b0254407408990c082908938a69579`；核查时该包工作树干净 |
 | RGL 插件参考 | `d4bf3cf36fe4a363a56df1bec2ce3809720db563` |
 | RGL Core 参考 | `v0.21.0` |
-| 新目录 | 已初始化本地 Git，初始分支 `codex/bootstrap`；无远程仓库、功能源码或安装产物 |
+| 新目录 | 已初始化本地 Git，主分支为 `main`，直接在该分支开发；无远程仓库、功能源码或安装产物 |
 
 `dependencies/sentry_baseline.sha256` 登记原组件除 `maps/` 外的 57 个文件，包含待排除代码以便追溯，并不是迁入清单。后续读取基线前可在原组件目录执行 `sha256sum -c /home/tianze/livox_lidar_simulation_gz/dependencies/sentry_baseline.sha256`。文件指纹不代替源代码备份；当前保留原工程及其提交，不额外复制大型地图。
 

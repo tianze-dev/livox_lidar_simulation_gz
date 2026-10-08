@@ -48,7 +48,7 @@ git diff --cached --check
 
 ## 提交与授权
 
-功能分支使用 `codex/` 前缀。提交标题采用 `type(scope): 中文描述`，scope 可省略；类型可用 feat、fix、docs、refactor、test、build、chore。
+按项目所有者约定，直接在 `main` 分支上开发和提交，不要求创建功能分支。提交标题采用 `type(scope): 中文描述`，scope 可省略；类型可用 feat、fix、docs、refactor、test、build、chore。
 
 提交前检查完整暂存差异与新文件，确保不含无关改动。公开发布、创建远程仓库和推送需另行确认。
 
