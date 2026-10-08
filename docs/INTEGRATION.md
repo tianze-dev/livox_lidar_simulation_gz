@@ -26,6 +26,8 @@ Xacro 和 launch 都读取安装包的 `config/models/mid360.yaml`。默认外�
 
 雷达外观位于其传感器链接下，由 RGL 自链接过滤排除，避免外壳遮挡所有射线；机器人其他部件仍参与遮挡。碰撞体用于物理碰撞，RGL 求交使用场景可视几何。
 
+多实例使用共用 RGL 场景，所有已注册雷达自身链接的外观都会被排除，因此本实现不会模拟雷达外壳之间的相互遮挡。普通机器人部件不受此例外影响。
+
 可选 `visual_mesh` 指定使用者自己的网格 URI，`mesh_rpy` 调整网格朝向。网格应采用米单位且以安装参考为原点；只替换外观，不自动推断尺寸、碰撞、质量或测量原点，也不自动赋予分发权。
 
 ## 世界插件
@@ -59,3 +61,25 @@ IMU 使用 Gazebo 原生 Imu，单位为 rad/s 和 m/s²。静止水平放置时
 ## 更新与兼容性
 
 核心改动在本仓库提交；父项目主动更新到验证过的提交或标签，并提交子模块指针。每个父工作空间仍需构建与验证，尤其是 TF 唯一性、话题隔离和机器人自遮挡。本次不修改现有哨兵或无人机仓库。
+
+## 多实例演示配置
+
+`demo.launch.py sensors_file:=/path/to/sensors.yaml` 可在同一世界放置多个固定传感器。文件仅包含 `sensors` 列表，每项支持 model、name、namespace、xyz、rpy、visual_mesh 和 mesh_rpy，单位仍为米／弧度。完整示例为 `config/demos/dual_mid360.yaml`。
+
+```yaml
+sensors:
+  - name: front
+    namespace: robot_a
+    xyz: [0, 0, 1]
+    rpy: [0, 0, 0]
+  - name: side
+    namespace: robot_b
+    xyz: [1, 0, 1]
+    rpy: [0, 0, 1.5707963267948966]
+```
+
+默认型号是 mid360。话题按 `/<namespace>/<name>/points` 和 `/<namespace>/<name>/imu` 生成；六个子 frame 使用 front／side 前缀，公共父 frame 为 world。重名即使跨 namespace 也会被拒绝。当前只实测了两个实例，不宣称任意数量实时运行。
+
+各实例分别使用 robot_state_publisher 和传感器桥接，只有第一路桥接时钟。所有传感器从一开始就写入初始世界，支持全场景复位。RViz 配置随实例列表生成，不再只显示默认话题。
+
+这是一种固定安装验证场景，不是整机运动控制器。不要在该 demo 中任意移动雷达模型后继续信任其静态 TF；真实移动机器人由父项目维护动态 TF，本轮仅验证了障碍物离散改位后的稳定扫描结果。

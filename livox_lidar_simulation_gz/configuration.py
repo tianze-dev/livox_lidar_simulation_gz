@@ -38,3 +38,55 @@ def boolean(value):
     if normalized not in ('true', 'false'):
         raise ValueError(f'Expected true or false, got {value}')
     return normalized == 'true'
+
+
+def vector3(value, field):
+    """Normalize a YAML vector or launch argument without permitting NaN/Inf."""
+    values = value.split() if isinstance(value, str) else value
+    if not isinstance(values, (list, tuple)) or len(values) != 3:
+        raise ValueError(f'{field} requires three numbers')
+    if any(isinstance(item, bool) for item in values):
+        raise ValueError(f'{field} cannot contain booleans')
+    try:
+        numbers = [float(item) for item in values]
+    except (TypeError, ValueError) as error:
+        raise ValueError(f'{field} requires three numbers') from error
+    if not all(math.isfinite(item) for item in numbers):
+        raise ValueError(f'{field} must be finite')
+    return ' '.join(str(item) for item in numbers)
+
+
+def load_sensors(share, sensors_file='', defaults=None):
+    """One validated instance contract shared by the single and multi demo."""
+    if sensors_file:
+        data = yaml.safe_load(Path(sensors_file).read_text())
+        if not isinstance(data, dict) or set(data) != {'sensors'}:
+            raise ValueError('Instance file must contain only a sensors list')
+        rows = data['sensors']
+    else:
+        rows = [defaults or {}]
+    if not isinstance(rows, list) or not rows:
+        raise ValueError('sensors must be a nonempty list')
+    baseline = dict(model='mid360', name='mid360', namespace='livox',
+                    xyz='0 0 1', rpy='0 0 0', visual_mesh='', mesh_rpy='0 0 0')
+    names, topics, result = set(), set(), []
+    for row in rows:
+        if not isinstance(row, dict) or set(row) - set(baseline):
+            raise ValueError('Invalid sensor instance or unknown keys')
+        item = {**baseline, **row}
+        for field in ('model', 'name', 'namespace', 'visual_mesh'):
+            if not isinstance(item[field], str):
+                raise ValueError(f'{field} must be a string')
+        load_model(share, item['model'])
+        points, imu = sensor_topics(item['namespace'], item['name'])
+        if item['name'] in names:
+            raise ValueError(f'Duplicate sensor name / TF prefix: {item["name"]}')
+        if points in topics or imu in topics:
+            raise ValueError('Duplicate sensor topics')
+        names.add(item['name'])
+        topics.update((points, imu))
+        for field in ('xyz', 'rpy', 'mesh_rpy'):
+            item[field] = vector3(item[field], field)
+        item.update(points_topic=points, imu_topic=imu)
+        result.append(item)
+    return result

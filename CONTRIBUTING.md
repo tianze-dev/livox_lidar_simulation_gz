@@ -41,6 +41,7 @@ source install/local_setup.bash
 ctest --test-dir build/livox_lidar_simulation_gz --output-on-failure
 # 单独执行需要 GPU 的运行测试：
 python3 test/smoke_runtime.py
+python3 test/multi_runtime.py
 git diff --check
 git diff --cached --check
 ```

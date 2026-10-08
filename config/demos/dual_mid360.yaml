@@ -1,0 +1,12 @@
+# Fixed sensors with separate topic namespaces and globally distinct TF prefixes.
+sensors:
+  - model: mid360
+    name: front
+    namespace: robot_a
+    xyz: [0, 0, 1]
+    rpy: [0, 0, 0]
+  - model: mid360
+    name: side
+    namespace: robot_b
+    xyz: [1, 0, 1]
+    rpy: [0, 0, 1.5707963267948966]
