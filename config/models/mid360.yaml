@@ -1,0 +1,22 @@
+# Source: https://www.livoxtech.com/mid-360/specs
+# Geometry/IMU origins below are explicit approximations, not CAD calibration.
+model: mid360
+pattern: Livox Mid360
+pattern_file: LivoxMid360.mat3x4f
+pattern_groups: 40
+rays_per_frame: 20000
+lidar_rate: 10.0
+imu_rate: 200.0
+range_min: 0.1
+range_max: 40.0
+mass: 0.265
+size_x: 0.065
+size_y: 0.065
+size_z: 0.060
+measurement_z: 0.035
+imu_z: 0.035
+geometry_status: simplified_approximation
+inertia_status: uniform_box_approximation
+imu_extrinsics_status: uncalibrated_approximation
+intensity_semantics: gazebo_laser_retro_not_hardware_reflectivity
+range_semantics: fixed_cutoff_not_reflectivity_dependent_detection

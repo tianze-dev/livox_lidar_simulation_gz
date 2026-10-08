@@ -1,6 +1,6 @@
 # 开发与贡献规范
 
-本项目是基于 RGL 的非官方 Livox 多型号 Gazebo／ROS 2 仿真套件。当前处于开发准备阶段，功能范围见 [开发计划](DEVELOPMENT_PLAN.md)，实际验证状态见 [准备记录](docs/DEVELOPMENT_READINESS.md)。
+本项目是基于 RGL 的非官方 Livox 多型号 Gazebo／ROS 2 仿真套件。当前为 MID-360 基础开发版，功能范围见 [开发计划](DEVELOPMENT_PLAN.md)，实际验证状态见 [验证记录](docs/VALIDATION.md)。
 
 ## 修改范围与上游复用
 
@@ -35,11 +35,17 @@
 ```bash
 bash -n scripts/check_environment.sh
 bash scripts/check_environment.sh
+python3 scripts/fetch_dependencies.py --offline
+bash scripts/build.sh
+source install/local_setup.bash
+ctest --test-dir build/livox_lidar_simulation_gz --output-on-failure
+# 单独执行需要 GPU 的运行测试：
+python3 test/smoke_runtime.py
 git diff --check
 git diff --cached --check
 ```
 
-环境检查不是构建或 GPU 扫描验收。新包尚未实现，当前没有可用的构建／完整测试入口；随实现补齐后应同步更新本文，不使用旧工作空间的安装产物冒充新包结果。
+首次构建前需按 README 在线准备依赖缓存，以上 offline 命令只检查已存在的缓存。环境检查不是构建或 GPU 扫描验收；不同层次分别运行并记录，不使用旧工作空间的安装产物冒充新包结果。
 
 | 变更 | 必需验证 |
 |---|---|

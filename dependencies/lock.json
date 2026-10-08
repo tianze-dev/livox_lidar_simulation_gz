@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "rgl_plugin_commit": "d4bf3cf36fe4a363a56df1bec2ce3809720db563",
+  "rgl_core_version": "v0.21.0",
+  "artifacts": [
+    {
+      "path": "downloads/RGL-core-linux-x64.zip",
+      "url": "https://github.com/RobotecAI/RobotecGPULidar/releases/download/v0.21.0/RGL-core-linux-x64.zip",
+      "sha256": "59518816f1818fb1dfb39cc6af48022708b71e7980b45a412942d4f928b661bc"
+    },
+    {
+      "path": "include/rgl/api/core.h",
+      "url": "https://raw.githubusercontent.com/RobotecAI/RobotecGPULidar/v0.21.0/include/rgl/api/core.h",
+      "sha256": "02857a1909944ae7f5a5fe47394fe84828e31ce5ef9d80b222b9f439dc397414"
+    },
+    {
+      "path": "patterns/LivoxMid360.mat3x4f",
+      "url": "https://raw.githubusercontent.com/RobotecAI/RGLGazeboPlugin/d4bf3cf36fe4a363a56df1bec2ce3809720db563/lidar_patterns/LivoxMid360.mat3x4f",
+      "sha256": "d7b3322f303f9a83268180931e730b5f361592ef1ab6f1d56c166aadf47153fd"
+    }
+  ],
+  "library": {
+    "path": "lib/libRobotecGPULidar.so",
+    "archive": "downloads/RGL-core-linux-x64.zip",
+    "member_basename": "libRobotecGPULidar.so",
+    "sha256": "e0e68d0b96e3b90bd9923c7c93af9ca75e55a687e77c87058a288b47e909ad52"
+  }
+}

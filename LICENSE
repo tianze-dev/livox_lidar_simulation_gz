@@ -3,7 +3,7 @@ License status: pending project-owner confirmation
 No project-wide open-source license has been selected or granted by this file.
 Apache-2.0 is a candidate under review, not an effective blanket license.
 
-This repository is currently a local development-preparation repository.
+This repository is currently a local development repository.
 Before public release, the project owner must confirm the license for original
 contributions and review the licenses and redistribution terms of third-party
 code, scanning data, CAD, meshes, textures and binary dependencies separately.

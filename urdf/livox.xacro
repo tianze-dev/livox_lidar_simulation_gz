@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Reusable mount macro: parent owns world, robot_state_publisher and namespaces. -->
+  <xacro:macro name="livox_lidar" params="parent name:=mid360 model:=mid360 xyz:='0 0 0' rpy:='0 0 0' points_topic:=/livox/mid360/points imu_topic:=/livox/mid360/imu visual_mesh:='' mesh_rpy:='0 0 0'">
+    <xacro:property name="cfg" value="${xacro.load_yaml('$(find livox_lidar_simulation_gz)/config/models/' + model + '.yaml')}"/>
+    <xacro:property name="sx" value="${cfg['size_x']}"/>
+    <xacro:property name="sy" value="${cfg['size_y']}"/>
+    <xacro:property name="sz" value="${cfg['size_z']}"/>
+    <!-- Tiny numerical frame masses keep fixed sensor links in Gazebo's URDF conversion. -->
+    <xacro:property name="frame_mass" value="0.000001"/>
+    <xacro:property name="mass" value="${cfg['mass'] - 2 * frame_mass}"/>
+    <link name="${name}_body">
+      <inertial>
+        <origin xyz="0 0 ${sz / 2}"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${mass * (sy*sy + sz*sz) / 12}" iyy="${mass * (sx*sx + sz*sz) / 12}" izz="${mass * (sx*sx + sy*sy) / 12}" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+      <collision name="${name}_collision">
+        <origin xyz="0 0 ${sz / 2}"/>
+        <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
+      </collision>
+    </link>
+    <joint name="${name}_mount" type="fixed">
+      <parent link="${parent}"/><child link="${name}_body"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+    <link name="${name}_lidar">
+      <inertial><mass value="${frame_mass}"/><inertia ixx="1e-9" iyy="1e-9" izz="1e-9" ixy="0" ixz="0" iyz="0"/></inertial>
+      <!-- RGL excludes visuals in the sensor's own link, not the whole robot. -->
+      <xacro:if value="${visual_mesh != ''}">
+        <visual name="${name}_external_mesh">
+          <origin xyz="0 0 ${-cfg['measurement_z']}" rpy="${mesh_rpy}"/>
+          <geometry><mesh filename="${visual_mesh}"/></geometry>
+        </visual>
+      </xacro:if>
+      <xacro:unless value="${visual_mesh != ''}">
+        <visual name="${name}_base_visual">
+          <origin xyz="0 0 ${sz * 0.28 - cfg['measurement_z']}"/>
+          <geometry><box size="${sx} ${sy} ${sz * 0.56}"/></geometry>
+          <material name="${name}_silver"><color rgba="0.65 0.68 0.72 1"/></material>
+        </visual>
+        <visual name="${name}_cover_visual">
+          <origin xyz="0 0 ${sz * 0.76 - cfg['measurement_z']}"/>
+          <geometry><cylinder radius="${sx * 0.44}" length="${sz * 0.48}"/></geometry>
+          <material name="${name}_blue"><color rgba="0.05 0.23 0.3 1"/></material>
+        </visual>
+      </xacro:unless>
+    </link>
+    <joint name="${name}_lidar_joint" type="fixed">
+      <parent link="${name}_body"/><child link="${name}_lidar"/>
+      <origin xyz="0 0 ${cfg['measurement_z']}"/>
+    </joint>
+    <link name="${name}_imu">
+      <inertial><mass value="${frame_mass}"/><inertia ixx="1e-9" iyy="1e-9" izz="1e-9" ixy="0" ixz="0" iyz="0"/></inertial>
+    </link>
+    <joint name="${name}_imu_joint" type="fixed">
+      <parent link="${name}_body"/><child link="${name}_imu"/>
+      <origin xyz="0 0 ${cfg['imu_z']}"/>
+    </joint>
+    <gazebo reference="${name}_lidar_joint"><preserveFixedJoint>true</preserveFixedJoint></gazebo>
+    <gazebo reference="${name}_imu_joint"><preserveFixedJoint>true</preserveFixedJoint></gazebo>
+    <gazebo reference="${name}_lidar">
+      <sensor name="${name}_rgl" type="custom">
+        <always_on>true</always_on><update_rate>${cfg['lidar_rate']}</update_rate>
+        <plugin filename="RGLServerPluginInstance" name="rgl::RGLServerPluginInstance">
+          <range><min>${cfg['range_min']}</min><max>${cfg['range_max']}</max></range>
+          <update_rate>${cfg['lidar_rate']}</update_rate>
+          <update_on_paused_sim>false</update_on_paused_sim>
+          <topic>${points_topic}</topic><frame>${name}_lidar</frame>
+          <pattern_preset>${cfg['pattern']}</pattern_preset>
+        </plugin>
+      </sensor>
+    </gazebo>
+    <gazebo reference="${name}_imu">
+      <sensor name="${name}_imu_sensor" type="imu">
+        <always_on>true</always_on><update_rate>${cfg['imu_rate']}</update_rate>
+        <topic>${imu_topic}</topic><gz_frame_id>${name}_imu</gz_frame_id>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>

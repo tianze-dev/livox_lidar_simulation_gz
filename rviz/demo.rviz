@@ -1,0 +1,38 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Global Options:
+    Fixed Frame: world
+    Background Color: 25; 30; 40
+    Frame Rate: 30
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1
+    - Class: rviz_default_plugins/PointCloud2
+      Name: MID-360 points
+      Enabled: true
+      Topic:
+        Value: /livox/mid360/points
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Position Transformer: XYZ
+      Color Transformer: AxisColor
+      Style: Points
+      Size (Pixels): 2
+      Decay Time: 0.2
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 12
+      Pitch: 0.5
+      Yaw: 0.8
+      Focal Point: {X: 0, Y: 0, Z: 1}
