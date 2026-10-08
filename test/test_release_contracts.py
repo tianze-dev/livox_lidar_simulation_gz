@@ -24,11 +24,22 @@ def test_avia_is_not_mid360_appearance(monkeypatch):
     monkeypatch.setattr(xacro.substitution_args, '_eval_find', lambda name: str(ROOT))
     xml = xacro.process_file(str(ROOT/'urdf/demo.urdf.xacro'), mappings={'model':'avia','name':'avia'}).toxml()
     robot = ET.fromstring(xml)
-    assert robot.find(".//visual[@name='avia_window']") is not None
+    assert robot.find('.//mesh').get('filename').endswith('/meshes/avia/avia.dae')
     assert robot.find(".//visual[@name='avia_cover_visual']") is None
-    assert robot.find('.//mesh') is None
-    assert len(robot.findall('.//collision')) == 1
+    assert len(robot.findall('.//collision')) == 2
     assert robot.find('.//pattern_preset').text == 'Livox Avia'
+
+
+def test_avia_primitive_is_removed(monkeypatch):
+    import xacro
+    import xacro.substitution_args
+    monkeypatch.setattr(xacro.substitution_args, '_eval_find', lambda name: str(ROOT))
+    with pytest.raises(xacro.XacroException, match='primitive appearance has been removed'):
+        xacro.process_file(str(ROOT/'urdf/demo.urdf.xacro'),
+            mappings={'model': 'avia', 'name': 'avia', 'visual_mesh': 'primitive'})
+    from livox_lidar_simulation_gz.configuration import load_sensors
+    with pytest.raises(ValueError, match='primitive appearance has been removed'):
+        load_sensors(ROOT, defaults={'model': 'avia', 'visual_mesh': 'primitive'})
 
 
 def test_moving_fixture_has_real_joints_and_feedback(monkeypatch):

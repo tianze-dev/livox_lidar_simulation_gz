@@ -1,4 +1,4 @@
-# clang-format 18；参考 scut-uav，适用于本项目维护的 C++ 代码。
+# clang-format 18
 BasedOnStyle: Google
 Language: Cpp
 Standard: c++20

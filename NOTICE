@@ -9,8 +9,9 @@ Copyright 2022-2023 Robotec.AI and upstream contributors.
 Upstream license: third_party/rgl_gazebo/LICENSE.
 Source and modifications: third_party/rgl_gazebo/UPSTREAM.md.
 
-The MID-360 model, manufacturer names and markings are not claimed as original
+The MID-360 and Avia models, manufacturer names and markings are not claimed as original
 project property or blanket-relicensed by the root license. Model provenance,
-owner-confirmed redistribution basis and processing are in meshes/mid360/NOTICE.md.
+MID-360 owner-confirmed redistribution basis and Avia pending redistribution terms
+are in meshes/mid360/NOTICE.md and meshes/avia/NOTICE.md.
 Scan patterns and downloaded runtimes have separate upstream provenance;
 see THIRD_PARTY_NOTICES.md. No endorsement by their respective owners is implied.

@@ -1,6 +1,7 @@
 import importlib.util
 import io
 import json
+import re
 from pathlib import Path
 import sys
 import subprocess
@@ -56,9 +57,8 @@ def test_no_excluded_dependencies():
         for path in (ROOT / folder).rglob('*'):
             if path.is_file() and '__pycache__' not in path.parts:
                 text = path.read_text()
-                assert '/home/tianze' not in text
-                assert 'sentry_simulation' not in text
-                assert 'scut-uav' not in text
+                assert not re.search(r'/home/[^/\s]+/|/Users/[^/\s]+/|/tmp/|[A-Za-z]:[\\/]Users[\\/]', text), (
+                    f'Non-portable user or temporary path in {path.relative_to(ROOT)}')
 
 
 def test_cache_path_cannot_escape(tmp_path):

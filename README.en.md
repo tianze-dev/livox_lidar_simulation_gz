@@ -4,13 +4,13 @@ An unofficial, standalone Livox simulation suite using RGL, ROS 2 Jazzy and Gaze
 The repository root is one ROS package, suitable for a pinned Git submodule in a parent workspace.
 No other robot workspace is used as a dependency.
 
-## First delivery scope
+## Supported features
 
 - MID-360: detailed colored mesh, lightweight collision, manufacturer nominal extrinsics, standard PointCloud2/IMU, static and moving demos.
-- Avia: non-repetitive scan-pattern and standard-interface preview with a model-specific primitive housing. Mounting/IMU origins are approximations; no detailed CAD claim.
+- Avia: official CAD-derived detailed appearance, lightweight collision, non-repetitive scan-pattern and standard-interface preview. Measurement/IMU origins remain approximations. See [asset provenance and pending public redistribution terms](meshes/avia/NOTICE.md).
 - One geometric return per ray, whole-frame snapshots, finite scan-pattern replay. No per-point timestamps, motion distortion, CustomMsg, FAST-LIVO2, CSV conversion or hardware protocol emulation.
 
-See [support matrix](docs/SUPPORT.md), [review checklist](docs/RELEASE_REVIEW.md), [validation](docs/VALIDATION.md) and [integration](docs/INTEGRATION.md).
+Version 0.1.0 is a prerelease. See [support matrix](docs/SUPPORT.md), [integration](docs/INTEGRATION.md) and [contributing](CONTRIBUTING.md).
 
 ## Build
 
@@ -49,12 +49,12 @@ The moving fixture uses actual Gazebo joint states to drive dynamic TF; its rail
 ## Container
 
 ```bash
-docker build -f docker/Dockerfile -t livox-gz-review:0.1.0 .
-docker run --rm --gpus all livox-gz-review:0.1.0 python3 test/smoke_runtime.py
+docker build -f docker/Dockerfile -t livox-gz:0.1.0 .
+docker run --rm --gpus all livox-gz:0.1.0 python3 test/smoke_runtime.py
 ```
 
 The image builds and runs unit tests without a GPU; runtime tests require NVIDIA Container Toolkit and a GPU. The container does not mount host workspaces. CPU CI does not claim GPU tests passed. The base image is digest-pinned, but apt packages are resolved at build time.
 
 ## License
 
-Original project code: Apache-2.0, confirmed by the owner. Upstream code and assets retain their notices and applicable terms; see LICENSE, NOTICE and THIRD_PARTY_NOTICES.md. The MID-360 asset redistribution basis is separately recorded in meshes/mid360/NOTICE.md. No official endorsement is implied. Publication and tags require owner review.
+Original project code: Apache-2.0. Upstream code and assets retain their notices and applicable terms; see LICENSE, NOTICE and THIRD_PARTY_NOTICES.md. The MID-360 asset redistribution basis is separately recorded in meshes/mid360/NOTICE.md. No official endorsement is implied.

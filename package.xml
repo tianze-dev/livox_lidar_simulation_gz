@@ -3,7 +3,6 @@
   <name>livox_lidar_simulation_gz</name>
   <version>0.1.0</version>
   <description>Unofficial standalone Livox simulation suite using RGL and Gazebo Harmonic.</description>
-  <!-- Local review default from Git identity; owner confirms before public publication. -->
   <maintainer email="junxiangz0717@gmail.com">Junxiang Zhang</maintainer>
   <license>Apache-2.0</license>
   <buildtool_depend>ament_cmake</buildtool_depend>

@@ -6,7 +6,7 @@
     <xacro:property name="sx" value="${cfg['size_x']}"/>
     <xacro:property name="sy" value="${cfg['size_y']}"/>
     <xacro:property name="sz" value="${cfg['size_z']}"/>
-    <xacro:property name="actual_mesh" value="${cfg['visual_mesh'] if visual_mesh == '' else ('' if visual_mesh == 'primitive' else visual_mesh)}"/>
+    <xacro:property name="actual_mesh" value="${xacro.fatal('Avia primitive appearance has been removed; use the detailed mesh') if model == 'avia' and visual_mesh == 'primitive' else (cfg['visual_mesh'] if visual_mesh == '' else ('' if visual_mesh == 'primitive' else visual_mesh))}"/>
     <!-- Tiny numerical frame masses keep fixed sensor links in Gazebo's URDF conversion. -->
     <xacro:property name="frame_mass" value="0.000001"/>
     <xacro:property name="mass" value="${cfg['mass'] - 2 * frame_mass}"/>
@@ -20,11 +20,18 @@
         <origin xyz="0 0 ${cfg['collision_body_height'] / 2}"/>
         <geometry><box size="${sx} ${sy} ${cfg['collision_body_height']}"/></geometry>
       </collision>
-      <!-- Approximate connector envelope: manual width including connector is 73 mm. -->
+      <!-- Lightweight, model-specific connector envelope; never use CAD for collision. -->
       <xacro:if value="${cfg['connector_collision']}">
       <collision name="${name}_connector_collision">
-        <origin xyz="-0.0365 0 0.0143" rpy="0 1.5707963267948966 0"/>
-        <geometry><cylinder radius="0.0062" length="0.008"/></geometry>
+        <origin xyz="${cfg['connector']['xyz']}" rpy="${cfg['connector']['rpy']}"/>
+        <geometry>
+          <xacro:if value="${cfg['connector']['shape'] == 'cylinder'}">
+            <cylinder radius="${cfg['connector']['radius']}" length="${cfg['connector']['length']}"/>
+          </xacro:if>
+          <xacro:if value="${cfg['connector']['shape'] == 'box'}">
+            <box size="${cfg['connector']['size']}"/>
+          </xacro:if>
+        </geometry>
       </collision>
       </xacro:if>
     </link>
@@ -53,18 +60,6 @@
           <geometry><cylinder radius="${sx * 0.44}" length="${sz * 0.48}"/></geometry>
           <material name="${name}_blue"><color rgba="0.05 0.23 0.3 1"/></material>
         </visual>
-        </xacro:if>
-        <xacro:if value="${cfg['visual_style'] == 'front_window'}">
-          <visual name="${name}_housing">
-            <origin xyz="0 0 ${sz/2-cfg['measurement_z']}"/>
-            <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
-            <material name="${name}_silver"><color rgba="0.65 0.68 0.72 1"/></material>
-          </visual>
-          <visual name="${name}_window">
-            <origin xyz="${sx/2+0.0001} 0 ${sz/2-cfg['measurement_z']}"/>
-            <geometry><box size="0.0001 ${sy*.85} ${sz*.7}"/></geometry>
-            <material name="${name}_window_black"><color rgba="0.02 0.025 0.035 1"/></material>
-          </visual>
         </xacro:if>
       </xacro:unless>
     </link>

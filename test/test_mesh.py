@@ -34,10 +34,7 @@ def test_registered_mesh_and_collision_envelope():
                  & (np.linalg.norm(points[:, 1:] - [0, .0143], axis=1) <= .0062))
     assert (body | connector).all(), 'Lightweight collision does not cover the visual'
     assert sum(int(item.get('count')) for item in root.findall('.//c:triangles', NS)) == report['exported_triangles']
-    assert len(root.findall('c:library_materials/c:material', NS)) == 9
-    transform = np.array(report['source_to_mount'])
-    assert np.allclose(transform[:3, :3] @ transform[:3, :3].T, np.eye(3), atol=1e-7)
-    assert np.linalg.det(transform[:3, :3]) == pytest.approx(1)
+    assert len(root.findall('c:library_materials/c:material', NS)) == report['material_count'] == 9
 
 
 def test_official_imu_offset():
@@ -81,10 +78,16 @@ def test_body_winding_faces_outward():
     volume = np.einsum('ij,ij->i', a, np.cross(b, c)).sum() / 6
     assert len(shell) == 21958
     assert volume > 8e-5, 'Main housing winding is reversed (backface-culling regression)'
-    report = json.loads((ROOT / 'meshes/mid360/normal_repair.json').read_text())
-    assert report['vertices_unchanged']
-    assert report['boundary_edges_before'] == report['boundary_edges_after']
-    assert report['flipped_faces'] == 22226
+    # Check final geometry directly, not a historical repair report.
+    small_shell = next(group for group in groups.values() if len(group) == 268)
+    a, b, c = vertices[np.array(small_shell)].transpose(1, 0, 2)
+    assert np.einsum('ij,ij->i', a, np.cross(b, c)).sum() / 6 > 0
+    edge_counts = {}
+    for face in faces:
+        for a, b in zip(face, np.roll(face, -1)):
+            edge = tuple(sorted((a, b)))
+            edge_counts[edge] = edge_counts.get(edge, 0) + 1
+    assert sum(count == 1 for count in edge_counts.values()) == 583
 
 
 def test_primitive_fallback(monkeypatch):

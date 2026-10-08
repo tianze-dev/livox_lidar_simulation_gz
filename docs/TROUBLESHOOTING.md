@@ -12,7 +12,7 @@
 
 离线环境需提前准备完整 `.deps/rgl`，然后运行 `python3 scripts/fetch_dependencies.py --offline`。也可使用自定义缓存：下载器 `--cache-dir /path/cache` 对应构建 `-DLIVOX_RGL_CACHE=/path/cache`。CMake 不联网，不从其他工程寻找库。
 
-首版锁定 Linux x86_64 预编译 RGL。自行编译其他平台的 RGL 属于未验收路线，遵循上游 CUDA／OptiX 工具链与许可要求，不将替换共享库视为已支持。
+本包使用锁定版本的 Linux x86_64 预编译 RGL。自行编译其他平台的 RGL 属于未验收路线，遵循上游 CUDA／OptiX 工具链与许可要求，不将替换共享库视为已支持。
 
 ## 没有点云
 

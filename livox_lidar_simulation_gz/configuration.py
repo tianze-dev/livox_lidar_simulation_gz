@@ -84,6 +84,8 @@ def load_sensors(share, sensors_file='', defaults=None):
             if not isinstance(item[field], str):
                 raise ValueError(f'{field} must be a string')
         load_model(share, item['model'])
+        if item['model'] == 'avia' and item['visual_mesh'] == 'primitive':
+            raise ValueError('Avia primitive appearance has been removed; use the detailed mesh')
         points, imu = sensor_topics(item['namespace'], item['name'])
         if item['name'] in names:
             raise ValueError(f'Duplicate sensor name / TF prefix: {item["name"]}')
