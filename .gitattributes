@@ -1,0 +1,19 @@
+# 项目文本统一 LF；原始第三方代码和模型保留原始字节。
+* text=auto eol=lf
+third_party/** -text !eol
+vendor/** -text !eol
+
+*.[sS][tT][lL] binary !eol
+*.[sS][tT][pP] binary !eol
+*.[sS][tT][eE][pP] binary !eol
+*.dae binary !eol
+*.glb binary !eol
+*.blend binary !eol
+*.mat3x4f binary !eol
+*.png binary !eol
+*.jpg binary !eol
+*.jpeg binary !eol
+*.webp binary !eol
+*.pdf binary !eol
+*.zip binary !eol
+*.so binary !eol

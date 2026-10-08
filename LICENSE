@@ -1,0 +1,15 @@
+License status: pending project-owner confirmation
+
+No project-wide open-source license has been selected or granted by this file.
+Apache-2.0 is a candidate under review, not an effective blanket license.
+
+This repository is currently a local development-preparation repository.
+Before public release, the project owner must confirm the license for original
+contributions and review the licenses and redistribution terms of third-party
+code, scanning data, CAD, meshes, textures and binary dependencies separately.
+
+Third-party materials remain subject to their applicable licenses and notices.
+Refer to THIRD_PARTY_NOTICES.md for the current inventory and review status.
+
+本文件仅说明许可证尚待确认，不是正式开源许可证。
+不得将候选 Apache-2.0 或参考工程的 GPL-3.0 自动套用到整个仓库及模型资产。

@@ -1,0 +1,29 @@
+# 构建、依赖下载和运行产物；不忽略正式的模型和预设目录。
+/build/
+/install/
+/log/
+/generated/
+/run/
+/.deps/
+/.cache/
+/dependencies/local.json
+/compile_commands.json
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.blend[0-9]*
+.DS_Store
+
+# 本地凭据和环境覆盖；可提交不含秘密的示例。
+.env
+.env.*
+!.env.example

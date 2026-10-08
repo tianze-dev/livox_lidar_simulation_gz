@@ -1,0 +1,9 @@
+# 上游代码保留原格式；不格式化下载缓存和生成文件。
+third_party/**
+vendor/**
+.deps/**
+build/**
+install/**
+log/**
+generated/**
+run/**
