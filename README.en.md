@@ -12,6 +12,13 @@ No other robot workspace is used as a dependency.
 
 Version 0.1.0 is a prerelease. See [support matrix](docs/SUPPORT.md), [integration](docs/INTEGRATION.md) and [contributing](CONTRIBUTING.md).
 
+Both models include optional PBR GLB assets; DAE remains the default. For GLB, set
+`visual_mesh:=package://livox_lidar_simulation_gz/meshes/<model>/<model>.glb`
+and `mesh_rpy:="1.5707963267948966 0 0"` (Y-up to Z-up, visual only).
+`config/demos/mixed_glb.yaml` provides both models with this correction.
+Metal surfaces appear darker under the current Gazebo lighting; full material-extension
+fidelity and RViz GLB appearance have not been validated. Collision and sensor frames are unchanged.
+
 ## Build
 
 Target: Ubuntu 24.04 x86_64, ROS 2 Jazzy, Gazebo Harmonic, supported NVIDIA GPU/driver.

@@ -36,7 +36,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(DIRECTORY launch config urdf worlds rviz
   DESTINATION share/${PROJECT_NAME})
 foreach(model mid360 avia)
-  install(FILES meshes/${model}/${model}.dae
+  install(FILES meshes/${model}/${model}.dae meshes/${model}/${model}.glb
     meshes/${model}/geometry_report.json meshes/${model}/NOTICE.md
     DESTINATION share/${PROJECT_NAME}/meshes/${model})
 endforeach()

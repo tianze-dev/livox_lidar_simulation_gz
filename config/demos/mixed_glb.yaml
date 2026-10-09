@@ -1,0 +1,15 @@
+# Optional PBR visuals. Rotate Y-up GLB to the package's Z-up mount frame.
+# This affects the mesh only, not sensor TF, collision geometry or scan directions.
+sensors:
+  - model: mid360
+    name: mid360
+    namespace: livox
+    xyz: [0, -0.5, 1]
+    visual_mesh: package://livox_lidar_simulation_gz/meshes/mid360/mid360.glb
+    mesh_rpy: [1.5707963267948966, 0, 0]
+  - model: avia
+    name: avia
+    namespace: livox
+    xyz: [0, 0.5, 1]
+    visual_mesh: package://livox_lidar_simulation_gz/meshes/avia/avia.glb
+    mesh_rpy: [1.5707963267948966, 0, 0]

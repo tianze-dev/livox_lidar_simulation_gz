@@ -16,5 +16,14 @@
   ],
   "exported_triangles": 193139,
   "material_count": 3,
-  "output_sha256": "e5d3f96c949986c11465a712407932398e1673859fe9433e21bf2a95d700bec3"
+  "output_sha256": "e5d3f96c949986c11465a712407932398e1673859fe9433e21bf2a95d700bec3",
+  "glb": {
+    "file": "avia.glb",
+    "sha256": "16656ae77893e09ce8e54b5b8f4ec0a2909e13a9f1ce7807885d3fccc6c19c42",
+    "bytes": 5621908,
+    "up_axis": "Y_UP",
+    "mesh_rpy": [1.5707963267948966, 0, 0],
+    "triangles": 193139,
+    "material_count": 3
+  }
 }

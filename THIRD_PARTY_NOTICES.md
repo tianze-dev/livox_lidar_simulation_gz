@@ -8,8 +8,8 @@
 | [RGL Core v0.21.0](https://github.com/RobotecAI/RobotecGPULidar/tree/v0.21.0) | 官方 Linux x64 发行库与 API 头 | URL、版本和哈希由 `dependencies/lock.json` 锁定；此版本 Core 与插件 LICENSE 文本一致，安装时保留。预编译资产及其依赖的正式再分发审查尚未完成 |
 | [Livox 官方仿真仓库](https://github.com/Livox-SDK/livox_laser_simulation/tree/1cce1073633a062b92e30243a4c2920e45551bb5) | 型号与扫描轨迹来源，原 CSV 不重复收录 | 原 MIT License（Copyright 2021 livox）保存在 [third_party/livox_scan/LICENSE](third_party/livox_scan/LICENSE)，并随安装保留 |
 | RGL 收录的 Livox 扫描预设 | MID-360／Avia 的 `.mat3x4f` 文件 | 原数据来自 Livox，转换来源为 [RGLGazeboPlugin PR 52](https://github.com/RobotecAI/RGLGazeboPlugin/pull/52)；从固定上游下载并校验，保留 Robotec 与 Livox 声明 |
-| MID-360 模型 | 官方 STL 衍生的彩色 DAE | 所有者确认的分发依据、原文件哈希和外参来源见 [模型 NOTICE](meshes/mid360/NOTICE.md) |
-| Avia 模型 | 官方 STEP 衍生的彩色 DAE | [模型 NOTICE](meshes/avia/NOTICE.md) 记录来源与变换；公开再分发条件尚待确认，不适用 MID-360 的既有确认 |
+| MID-360 模型 | 官方 STL 衍生的彩色 DAE 和可选 PBR GLB | 所有者确认的分发依据、原文件哈希和外参来源见 [模型 NOTICE](meshes/mid360/NOTICE.md) |
+| Avia 模型 | 官方 STEP 衍生的彩色 DAE 和可选 PBR GLB | [模型 NOTICE](meshes/avia/NOTICE.md) 记录来源与变换；公开再分发条件尚待确认，不适用 MID-360 的既有确认 |
 
 简化外观与测试世界由本项目使用基础几何体描述。模型颜色和惯量是近似值；MID-360 使用手册名义外参，Avia 使用明确标注的几何近似原点。原始 CAD、参考照片和手册不随运行资源分发。
 

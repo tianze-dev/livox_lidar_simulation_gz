@@ -44,6 +44,8 @@ bash scripts/run.sh model:=avia name:=avia model_view:=true
 
 `scripts/run.sh` 在未指定环境变量时使用 ROS domain 119 和独立 Gazebo partition，避免默认混入 domain 0；已有显式设置会保留。直接使用 `ros2 launch` 则由使用者选择隔离环境。运行前确认目标 domain 没有实机或其他同话题实例。
 
+两款模型均随包提供可选 PBR GLB，默认仍加载 DAE。GLB 需要独立的网格轴向补偿；命令及双型号示例见 [GLB 接入说明](docs/INTEGRATION.md#可选-glb-外观)。
+
 双雷达演示共用一个世界，使用不同的话题、TF 名称和安装朝向：
 
 ```bash

@@ -32,6 +32,30 @@ Xacro 和 launch 都读取安装包的 `config/models/mid360.yaml`。默认外�
 
 可选 `visual_mesh` 指定使用者自己的网格 URI，`mesh_rpy` 调整网格朝向。不指定时使用内置 DAE；特殊值 `primitive` 仅在 MID-360 上提供简化外观，Avia 不再接受此参数。网格应采用米单位且以安装参考为原点；只替换外观，不自动推断尺寸、碰撞、质量或测量原点，也不自动赋予分发权。
 
+## 可选 GLB 外观
+
+两款型号同时提供 DAE 与 GLB，默认仍为已验证的 DAE。GLB 保留 PBR 金属度／粗糙度，当前 Gazebo 默认光照下金属外壳较暗；完整镀膜扩展效果与 RViz GLB 视觉一致性尚未验收。
+
+例如只切换 Avia 外观：
+
+```bash
+bash scripts/run.sh model:=avia name:=avia \
+  visual_mesh:=package://livox_lidar_simulation_gz/meshes/avia/avia.glb \
+  mesh_rpy:="1.5707963267948966 0 0"
+```
+
+MID-360 对应 `model:=mid360 name:=mid360` 和 `meshes/mid360/mid360.glb`，旋转参数相同。GLB 的 Y-up 到安装坐标 Z-up 补偿只传给 `mesh_rpy`，不要放进安装参数 `rpy`，否则会改变传感器的实际扫描朝向。碰撞、质量、测量原点及 IMU 外参均不因格式切换而改变。
+
+双型号 GLB 示例使用安装包中的相对资源，不依赖制作目录：
+
+```bash
+bash scripts/run.sh \
+  sensors_file:="$(ros2 pkg prefix --share livox_lidar_simulation_gz)/config/demos/mixed_glb.yaml" \
+  rviz:=false
+```
+
+恢复 DAE 时省略 `visual_mesh` 与 `mesh_rpy`；不要将 GLB 的 90° 补偿沿用到 DAE。Gazebo 短时实测两种格式都正常发布 10 Hz 点云和 200 Hz IMU，不代表更换格式能改善测量精度。
+
 ## 世界插件
 
 父世界必须且只应包含一个 RGL 场景管理器，并启用 Gazebo IMU 系统：

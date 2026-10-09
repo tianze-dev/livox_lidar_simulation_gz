@@ -32,6 +32,11 @@ def main():
         digest = hashlib.sha256((ROOT/f'meshes/{model}/{model}.dae').read_bytes()).hexdigest()
         if digest != report['output_sha256']:
             errors.append(f'{model} asset hash mismatch')
+        glb = ROOT/f'meshes/{model}/{model}.glb'
+        if not glb.is_file():
+            errors.append(f'Missing {model} GLB asset')
+        elif hashlib.sha256(glb.read_bytes()).hexdigest() != report['glb']['sha256']:
+            errors.append(f'{model} GLB asset hash mismatch')
     for folder in ('launch', 'cmake', 'livox_lidar_simulation_gz', 'urdf'):
         for path in (ROOT/folder).rglob('*'):
             if path.is_file() and '__pycache__' not in path.parts:
