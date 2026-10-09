@@ -16,6 +16,7 @@
 #pragma once
 
 #include <filesystem>
+#include <utility>
 
 #include "rgl/api/core.h"
 #include "LidarPatternLoader.hh"
@@ -66,6 +67,11 @@ public:
             const gz::sim::EntityComponentManager& ecm) override;
 
 private:
+    friend class RGLInstanceTest;
+    bool Connect(rgl_node_t parent, rgl_node_t child);
+    bool Disconnect(rgl_node_t parent, rgl_node_t child);
+    std::vector<std::pair<rgl_node_t, rgl_node_t>> graphEdges;
+
     bool LoadConfiguration(const std::shared_ptr<const sdf::Element>& sdf);
     void CreateLidar(gz::sim::Entity entity,
                      gz::sim::EntityComponentManager& ecm);
@@ -119,7 +125,7 @@ private:
     bool updateOnPausedSim = false;
     bool publishLaserScan = false;
 
-    gz::sim::Entity thisLidarEntity;
+    gz::sim::Entity thisLidarEntity = gz::sim::kNullEntity;
     gz::transport::Node::Publisher pointCloudPublisher;
     gz::transport::Node::Publisher laserScanPublisher;
     gz::transport::Node::Publisher pointCloudWorldPublisher;
@@ -139,6 +145,7 @@ private:
     std::chrono::steady_clock::duration lastRaytraceTime{0};
 
     bool isLidarInitialized = false;
+    bool pendingDestroy = false;
 
     int onPausedSimUpdateCounter = 0;
     const int onPausedSimRaytraceInterval = 100;

@@ -16,7 +16,7 @@
 
 ```xml
 <xacro:include filename="$(find livox_lidar_simulation_gz)/urdf/livox.xacro"/>
-<xacro:livox_lidar parent="base_link" name="front_lidar" model="mid360"
+<xacro:livox_lidar parent="base_link" name="front_lidar" namespace="robot" model="mid360"
   xyz="0.1 0 0.4" rpy="0 0 0"
   points_topic="/robot/front_lidar/points"
   imu_topic="/robot/front_lidar/imu"/>
@@ -76,13 +76,23 @@ ros2 launch livox_lidar_simulation_gz sensor.launch.py \
   name:=front_lidar namespace:=robot bridge_clock:=false
 ```
 
+默认话题按 `/<namespace>/<name>/points` 和 `/imu` 生成，挂载宏和桥接的 `namespace`、`name` 应保持一致。两侧均支持 `points_topic` 与 `imu_topic` 显式覆盖，要求绝对话题路径；桥接的 `model` 只做配置校验，不会修改已生成的机器人。多雷达即使话题命名空间不同，`name` 仍必须唯一。
+
 生成 Gazebo→ROS 单向桥接 `/robot/front_lidar/points` 与 `/robot/front_lidar/imu`，必须与 Xacro 中话题一致。可在父 launch 中包含该入口，再按需施加 ROS remapping。此入口不创建机器人、不发布 TF、不启动世界或 RViz。
 
 父 robot_state_publisher 发布挂载宏的固定关节；全局 `/clock` 由父项目唯一桥接，只有独立使用时才选择 `bridge_clock:=true`。本包节点使用仿真时间。
 
+开启时钟桥接时建议同时指定 `clock_topic:=/world/你的世界名/clock`，直接使用世界专属时钟；ROS 输出仍为 `/clock`。默认源为 Gazebo `/clock`，供已有接入保持兼容。内置 demo 使用 `/world/livox_demo/clock`。
+
 PointCloud2 为小端紧凑布局，x/y/z/intensity 都是 float32，偏移 0/4/8/12，point_step=16；坐标是该帧传感器坐标，时间戳为整帧快照仿真时间。未命中射线不输出，没有 offset_time、line、tag 或 CustomMsg。
 
 IMU 使用 Gazebo 原生 Imu，单位为 rad/s 和 m/s²。默认地球重力下静止水平放置时，z 比力约 +9.80665 m/s²；当前没有硬件噪声、偏置、量程限幅或外参标定。协方差和方向数据以 Gazebo 消息为准，不宣称与 Livox 驱动完全一致。
+
+## 型号配置与扫描预设
+
+`config/models/*.yaml` 提供频率、量程、尺寸、质量、外参及外观配置。数值必须有限，质量、尺寸和频率为正；碰撞形状和 IMU 相对坐标也会校验。直接调用 Xacro 和 launch 均拒绝非法配置。
+
+预设文件、分组数和每帧射线数只在 `dependencies/lock.json` 的 `scan_presets` 中维护，不是型号 YAML 的可调参数。下载、构建及插件加载时核对二进制文件大小与分组布局。改变扫描频率会改变单位仿真时间内的射线数，不会自动重新采样预设。
 
 ## 更新与兼容性
 
@@ -102,7 +112,7 @@ IMU 使用 Gazebo 原生 Imu，单位为 rad/s 和 m/s²。默认地球重力下
 
 ## 多实例演示配置
 
-`demo.launch.py sensors_file:=/path/to/sensors.yaml` 可在同一世界放置多个固定传感器。文件仅包含 `sensors` 列表，每项支持 model、name、namespace、xyz、rpy、visual_mesh 和 mesh_rpy，单位仍为米／弧度。完整示例为 `config/demos/dual_mid360.yaml`。
+`demo.launch.py sensors_file:=/path/to/sensors.yaml` 可在同一世界放置多个固定传感器。文件仅包含 `sensors` 列表，每项支持 model、name、namespace、xyz、rpy、visual_mesh、mesh_rpy，以及可选的 points_topic、imu_topic 绝对话题覆盖；单位为米／弧度。完整示例为 `config/demos/dual_mid360.yaml`。
 
 ```yaml
 sensors:

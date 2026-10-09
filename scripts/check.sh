@@ -14,6 +14,7 @@ case "$mode" in --unit|--gpu|--endurance) ;; *) echo 'Usage: bash scripts/check.
 python3 scripts/fetch_dependencies.py --offline
 ctest --test-dir build/livox_lidar_simulation_gz --output-on-failure
 if [[ "$mode" != --unit ]]; then
+  python3 test/robot_integration_runtime.py --output run/check/robot_integration
   python3 test/smoke_runtime.py --output run/check/single
   python3 test/multi_runtime.py --output run/check/dual
   python3 test/multi_runtime.py --mixed --output run/check/mixed

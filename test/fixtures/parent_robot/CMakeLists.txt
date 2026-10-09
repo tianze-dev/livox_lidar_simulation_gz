@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.22)
+project(livox_test_robot)
+find_package(ament_cmake REQUIRED)
+find_package(livox_lidar_simulation_gz REQUIRED)
+install(FILES robot.urdf.xacro world.sdf DESTINATION share/${PROJECT_NAME})
+ament_package()

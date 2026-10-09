@@ -10,10 +10,7 @@ connector:
   rpy: '0 1.5707963267948966 0'
   radius: 0.0062
   length: 0.008
-pattern: Livox Mid360
-pattern_file: LivoxMid360.mat3x4f
-pattern_groups: 40
-rays_per_frame: 20000
+# Scan layout is locked in dependencies/lock.json, not a tunable model parameter.
 lidar_rate: 10.0
 imu_rate: 200.0
 range_min: 0.1

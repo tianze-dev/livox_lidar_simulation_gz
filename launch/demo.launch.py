@@ -64,7 +64,10 @@ def _setup(context):
             IncludeLaunchDescription(PythonLaunchDescriptionSource(str(share / 'launch/sensor.launch.py')),
                                      launch_arguments={'model': sensor['model'], 'name': sensor['name'],
                                                        'namespace': sensor['namespace'],
-                                                       'bridge_clock': 'true' if index == 0 else 'false'}.items()),
+                                                       'points_topic': sensor['points_topic'],
+                                                       'imu_topic': sensor['imu_topic'],
+                                                       'bridge_clock': 'true' if index == 0 else 'false',
+                                                       'clock_topic': '/world/livox_demo/clock'}.items()),
         ])
         if moving:
             topic = '/fixture/' + sensor['name']

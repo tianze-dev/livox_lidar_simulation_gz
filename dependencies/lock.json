@@ -2,6 +2,10 @@
   "schema_version": 1,
   "rgl_plugin_commit": "d4bf3cf36fe4a363a56df1bec2ce3809720db563",
   "rgl_core_version": "v0.21.0",
+  "scan_presets": {
+    "mid360": {"pattern": "Livox Mid360", "pattern_file": "LivoxMid360.mat3x4f", "pattern_groups": 40, "rays_per_frame": 20000},
+    "avia": {"pattern": "Livox Avia", "pattern_file": "LivoxAvia.mat3x4f", "pattern_groups": 40, "rays_per_frame": 24000}
+  },
   "artifacts": [
     {
       "path": "downloads/RGL-core-linux-x64.zip",

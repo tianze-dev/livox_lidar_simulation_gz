@@ -91,7 +91,7 @@ def test_xacro_mount_and_sensor_contract(monkeypatch):
     sensor = robot.find("gazebo[@reference='front_lidar']/sensor")
     assert sensor.get('type') == 'custom'
     assert sensor.find('plugin/frame').text == 'front_lidar'
-    assert sensor.find('plugin/pattern_preset').text == 'Livox Mid360'
+    assert sensor.find('plugin/pattern_preset_path').text.endswith('/LivoxMid360.mat3x4f')
     assert len(robot.findall('.//collision')) == 2
     assert not robot.findall("link[@name='front_body']/visual")
     assert len(robot.findall("link[@name='front_lidar']/visual")) == 1

@@ -167,6 +167,8 @@ def main():
             report.update(passed=True, counts=counts.copy(), tf_children=sorted(frames),
                           reset_recovered=True, clock_publishers=1)
     except Exception as error:
+        report['imu_counts'] = {name: len(messages) for name, messages in imus.items()}
+        report['clock_count'] = len(clocks)
         report.update(error=repr(error), traceback=traceback.format_exc(), counts=counts.copy())
     finally:
         if process is not None:

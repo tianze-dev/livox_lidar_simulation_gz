@@ -67,6 +67,13 @@ def prepare(cache, lock, offline=False):
             with archive.open(members[0]) as stream:
                 atomic_copy(stream, target, library['sha256'])
     print(f'Verified runtime: {target}')
+    for model, preset in lock['scan_presets'].items():
+        groups, rays = preset['pattern_groups'], preset['rays_per_frame']
+        if type(groups) is not int or type(rays) is not int or groups <= 0 or rays <= 0:
+            raise ValueError(f'Invalid locked pattern layout for {model}')
+        path = safe_path(cache, 'patterns/' + preset['pattern_file'])
+        if path.stat().st_size != groups * rays * 48:
+            raise ValueError(f'Pattern file size disagrees with locked layout for {model}')
 
 
 def main():

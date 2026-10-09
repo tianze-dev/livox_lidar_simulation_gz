@@ -9,10 +9,7 @@ connector:
   xyz: '-0.032 0.0378 0.0319'
   rpy: '0 0 0'
   size: '0.0212 0.0146 0.0212'
-pattern: Livox Avia
-pattern_file: LivoxAvia.mat3x4f
-pattern_groups: 40
-rays_per_frame: 24000
+# Scan layout is locked in dependencies/lock.json, not a tunable model parameter.
 lidar_rate: 10.0
 imu_rate: 200.0
 range_min: 0.1

@@ -1,8 +1,28 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!-- Reusable mount macro: parent owns world, robot_state_publisher and namespaces. -->
-  <xacro:macro name="livox_lidar" params="parent name:=mid360 model:=mid360 xyz:='0 0 0' rpy:='0 0 0' points_topic:=/livox/mid360/points imu_topic:=/livox/mid360/imu visual_mesh:='' mesh_rpy:='0 0 0'">
+  <xacro:include filename="$(find livox_lidar_simulation_gz)/urdf/validation.xacro"/>
+  <xacro:macro name="livox_lidar" params="parent name:=mid360 model:=mid360 xyz:='0 0 0' rpy:='0 0 0' points_topic:='' imu_topic:='' visual_mesh:='' mesh_rpy:='0 0 0' namespace:=livox">
+    <xacro:livox_require condition="${model in ['mid360', 'avia']}" message="Unsupported Livox model"/>
     <xacro:property name="cfg" value="${xacro.load_yaml('$(find livox_lidar_simulation_gz)/config/models/' + model + '.yaml')}"/>
+    <xacro:property name="preset" value="${xacro.load_yaml('$(find livox_lidar_simulation_gz)/dependencies/lock.json')['scan_presets'][model]}"/>
+    <xacro:property name="pattern_root" value="$(optenv RGL_PATTERNS_DIR)"/>
+    <xacro:property name="default_pattern_root" value="$(find livox_lidar_simulation_gz)/patterns"/>
+    <xacro:livox_validate_config cfg="${cfg}" preset="${preset}" model="${model}"/>
+    <xacro:livox_check_name value="${name}" first_letter="${True}"/>
+    <xacro:livox_require condition="${python.isinstance(namespace,str)}" message="namespace must be a string"/>
+    <xacro:if value="${namespace.strip('/') != ''}">
+      <xacro:livox_check_segments values="${namespace.strip('/').split('/')}"/>
+    </xacro:if>
+    <xacro:property name="topic_root" value="${'/' + '/'.join(v for v in [namespace.strip('/'), name] if v)}"/>
+    <xacro:property name="actual_points_topic" value="${points_topic or topic_root + '/points'}"/>
+    <xacro:property name="actual_imu_topic" value="${imu_topic or topic_root + '/imu'}"/>
+    <xacro:livox_check_topic value="${actual_points_topic}"/>
+    <xacro:livox_check_topic value="${actual_imu_topic}"/>
+    <xacro:livox_require condition="${actual_points_topic != actual_imu_topic}" message="Point cloud and IMU topics must differ"/>
+    <xacro:livox_check_vector value="${xyz}" field="xyz"/>
+    <xacro:livox_check_vector value="${rpy}" field="rpy"/>
+    <xacro:livox_check_vector value="${mesh_rpy}" field="mesh_rpy"/>
     <xacro:property name="sx" value="${cfg['size_x']}"/>
     <xacro:property name="sy" value="${cfg['size_y']}"/>
     <xacro:property name="sz" value="${cfg['size_z']}"/>
@@ -83,15 +103,15 @@
           <range><min>${cfg['range_min']}</min><max>${cfg['range_max']}</max></range>
           <update_rate>${cfg['lidar_rate']}</update_rate>
           <update_on_paused_sim>false</update_on_paused_sim>
-          <topic>${points_topic}</topic><frame>${name}_lidar</frame>
-          <pattern_preset>${cfg['pattern']}</pattern_preset>
+          <topic>${actual_points_topic}</topic><frame>${name}_lidar</frame>
+          <pattern_preset_path pattern_count="${preset['pattern_groups']}" rays_per_frame="${preset['rays_per_frame']}">${pattern_root or default_pattern_root}/${preset['pattern_file']}</pattern_preset_path>
         </plugin>
       </sensor>
     </gazebo>
     <gazebo reference="${name}_imu">
       <sensor name="${name}_imu_sensor" type="imu">
         <always_on>true</always_on><update_rate>${cfg['imu_rate']}</update_rate>
-        <topic>${imu_topic}</topic><gz_frame_id>${name}_imu</gz_frame_id>
+        <topic>${actual_imu_topic}</topic><gz_frame_id>${name}_imu</gz_frame_id>
       </sensor>
     </gazebo>
   </xacro:macro>

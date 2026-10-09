@@ -2,8 +2,8 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="livox_moving_fixture">
   <xacro:arg name="model" default="mid360"/><xacro:arg name="name" default="mid360"/>
   <xacro:arg name="xyz" default="0 0 1"/><xacro:arg name="rpy" default="0 0 0"/>
-  <xacro:arg name="points_topic" default="/livox/mid360/points"/>
-  <xacro:arg name="imu_topic" default="/livox/mid360/imu"/>
+  <xacro:arg name="points_topic" default=""/>
+  <xacro:arg name="imu_topic" default=""/>
   <xacro:arg name="visual_mesh" default=""/><xacro:arg name="mesh_rpy" default="0 0 0"/>
   <xacro:arg name="linear_velocity" default="0.1"/><xacro:arg name="angular_velocity" default="0.15"/>
   <xacro:property name="name" value="$(arg name)"/>

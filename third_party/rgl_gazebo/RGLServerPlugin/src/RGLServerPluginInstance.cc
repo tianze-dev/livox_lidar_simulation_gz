@@ -57,6 +57,13 @@ void RGLServerPluginInstance::PreUpdate(
         const gz::sim::UpdateInfo& info,
         gz::sim::EntityComponentManager& ecm)
 {
+    // Gazebo runs PreUpdate serially, while PostUpdate systems run concurrently.
+    // Do not destroy GPU graphs alongside other sensors / scene updates.
+    if (pendingDestroy) {
+        DestroyLidar();
+        pendingDestroy = false;
+        return;
+    }
     if (ShouldRayTrace(info.simTime, info.paused)) {
         UpdateLidarPose(ecm);
         RayTrace(info.simTime);
@@ -69,7 +76,7 @@ void RGLServerPluginInstance::PostUpdate(
 {
     ecm.EachRemoved<>([&](const gz::sim::Entity& entity)-> bool {
         if (entity == thisLidarEntity) {
-            DestroyLidar();
+            pendingDestroy = true;
         }
         return true;
     });

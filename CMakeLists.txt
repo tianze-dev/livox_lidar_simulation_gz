@@ -40,12 +40,13 @@ foreach(model mid360 avia)
     meshes/${model}/geometry_report.json meshes/${model}/NOTICE.md
     DESTINATION share/${PROJECT_NAME}/meshes/${model})
 endforeach()
-install(FILES README.md README.en.md LICENSE NOTICE THIRD_PARTY_NOTICES.md CONTRIBUTING.md
+install(FILES README.md README.en.md LICENSE NOTICE THIRD_PARTY_NOTICES.md CONTRIBUTING.md CHANGELOG.md
   DESTINATION share/${PROJECT_NAME})
 install(FILES third_party/rgl_gazebo/LICENSE third_party/rgl_gazebo/UPSTREAM.md
   DESTINATION share/${PROJECT_NAME}/third_party/rgl_gazebo)
 install(FILES third_party/livox_scan/LICENSE DESTINATION share/${PROJECT_NAME}/third_party/livox_scan)
-install(FILES dependencies/lock.json DESTINATION share/${PROJECT_NAME}/dependencies)
+install(FILES dependencies/lock.json dependencies/distribution.json
+  DESTINATION share/${PROJECT_NAME}/dependencies)
 install(FILES docs/INTEGRATION.md docs/SUPPORT.md docs/TROUBLESHOOTING.md
   DESTINATION share/${PROJECT_NAME}/docs)
 install(FILES docs/images/mid360-gazebo.png docs/images/avia-gazebo.png
@@ -54,5 +55,20 @@ ament_environment_hooks(hooks/livox_gz.dsv.in)
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(unit_tests test TIMEOUT 60)
+  add_executable(rgl_initialization_test test/rgl_initialization_test.cc
+    ${upstream}/src/RGLServerPluginInstance.cc ${upstream}/src/Lidar.cc
+    ${upstream}/src/Utils.cc ${upstream}/src/LidarPatternLoader.cc)
+  target_compile_features(rgl_initialization_test PRIVATE cxx_std_20)
+  target_include_directories(rgl_initialization_test PRIVATE "${upstream}/include" "${LIVOX_RGL_CACHE}/include")
+  target_link_libraries(rgl_initialization_test PRIVATE
+    gz-plugin2::gz-plugin2 gz-sim8::gz-sim8)
+  foreach(api get_last_error_string node_rays_from_mat3x4f node_rays_set_range
+      node_rays_transform node_points_transform node_raytrace
+      node_points_compact_by_field node_points_yield node_points_format
+      graph_node_add_child graph_node_remove_child graph_node_set_priority graph_destroy)
+    target_link_options(rgl_initialization_test PRIVATE "-Wl,--wrap=rgl_${api}")
+  endforeach()
+  add_test(NAME rgl_initialization COMMAND rgl_initialization_test)
+  set_tests_properties(rgl_initialization PROPERTIES TIMEOUT 30)
 endif()
 ament_package()

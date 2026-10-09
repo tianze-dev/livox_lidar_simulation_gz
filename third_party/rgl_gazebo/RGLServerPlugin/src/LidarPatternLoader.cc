@@ -241,7 +241,33 @@ bool LidarPatternLoader::LoadPatternFromPresetPath(const sdf::ElementConstPtr& s
         return false;
     }
 
-    outPatternScanSize = outPattern.size();
+    // Optional grouped file layout supplied by the package's dependency lock.
+    std::size_t count = 1;
+    if (sdf->HasAttribute("pattern_count") || sdf->HasAttribute("rays_per_frame")) {
+        if (!sdf->HasAttribute("pattern_count") || !sdf->HasAttribute("rays_per_frame")) {
+            gzerr << "Grouped pattern requires pattern_count and rays_per_frame.\n";
+            return false;
+        }
+        auto positiveInteger = [](const std::string& text) -> std::size_t {
+            if (text.empty() || text.find_first_not_of("0123456789") != std::string::npos)
+                throw std::invalid_argument("not a positive integer");
+            auto value = std::stoull(text);
+            if (value == 0) throw std::invalid_argument("zero pattern size");
+            return value;
+        };
+        try {
+            count = positiveInteger(sdf->GetAttribute("pattern_count")->GetAsString());
+            auto rays = positiveInteger(sdf->GetAttribute("rays_per_frame")->GetAsString());
+            if (outPattern.size() % count != 0 || outPattern.size() / count != rays) {
+                gzerr << "Pattern file size does not match locked groups/rays_per_frame.\n";
+                return false;
+            }
+        } catch (const std::exception& error) {
+            gzerr << "Invalid pattern layout: " << error.what() << "\n";
+            return false;
+        }
+    }
+    outPatternScanSize = outPattern.size() / count;
 
     return true;
 }

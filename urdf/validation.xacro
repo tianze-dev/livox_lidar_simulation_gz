@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Direct Xacro consumers receive the same numeric/topic constraints as launch. -->
+  <xacro:macro name="livox_require" params="condition message">
+    <xacro:unless value="${condition}">
+      <xacro:property name="failure" value="${xacro.fatal(message)}" lazy_eval="false"/>
+    </xacro:unless>
+  </xacro:macro>
+  <xacro:macro name="livox_check_name" params="value first_letter:=false">
+    <xacro:livox_require condition="${python.isinstance(value, str) and len(value) > 0 and value.isascii() and (value[0].isalpha() or (not first_letter and value[0] == '_')) and value.replace('_','a').isalnum()}" message="Invalid sensor name or topic segment"/>
+  </xacro:macro>
+  <xacro:macro name="livox_check_topic" params="value">
+    <xacro:livox_require condition="${python.isinstance(value, str) and value.startswith('/')}" message="Sensor topic must be absolute"/>
+    <xacro:livox_check_segments values="${value[1:].split('/')}"/>
+  </xacro:macro>
+  <xacro:macro name="livox_check_segments" params="values">
+    <xacro:if value="${len(values) > 0}">
+      <xacro:livox_check_name value="${values[0]}"/>
+      <xacro:livox_check_segments values="${values[1:]}"/>
+    </xacro:if>
+  </xacro:macro>
+  <xacro:macro name="livox_check_number" params="value field positive:=false">
+    <xacro:livox_require condition="${python.isinstance(value, (int,float)) and not python.isinstance(value, bool) and math.isfinite(value) and (not positive or value > 0)}" message="${'Invalid finite numeric field: ' + field}"/>
+  </xacro:macro>
+  <xacro:macro name="livox_check_vector" params="value field">
+    <xacro:property name="items" value="${value.split() if python.isinstance(value,str) else value}"/>
+    <xacro:livox_require condition="${python.isinstance(items,(list,python.tuple)) and len(items) == 3}" message="${field + ' requires three numbers'}"/>
+    <xacro:livox_require condition="${not python.any(python.isinstance(v,bool) for v in items)}" message="${field + ' cannot contain booleans'}"/>
+    <xacro:livox_require condition="${python.all(math.isfinite(float(v)) for v in items)}" message="${field + ' must be finite'}"/>
+  </xacro:macro>
+  <xacro:macro name="livox_check_fields" params="cfg fields">
+    <xacro:if value="${len(fields) > 0}">
+      <xacro:livox_check_number value="${cfg[fields[0]]}" field="${fields[0]}" positive="true"/>
+      <xacro:livox_check_fields cfg="${cfg}" fields="${fields[1:]}"/>
+    </xacro:if>
+  </xacro:macro>
+  <xacro:macro name="livox_validate_config" params="cfg preset model">
+    <xacro:livox_require condition="${cfg['model'] == model and python.type(cfg['schema_version']) == int and cfg['schema_version'] == 1}" message="Model/config mismatch"/>
+    <xacro:livox_require condition="${not (python.set(cfg) &amp; python.set(preset))}" message="Scan layout is read-only; use dependencies/lock.json"/>
+    <xacro:livox_require condition="${python.type(preset['pattern_groups']) == int and preset['pattern_groups'] > 0 and python.type(preset['rays_per_frame']) == int and preset['rays_per_frame'] > 0}" message="Scan layout requires positive integers"/>
+    <xacro:livox_require condition="${'/' not in preset['pattern_file'] and '..' not in preset['pattern_file']}" message="Invalid pattern filename"/>
+    <xacro:livox_check_fields cfg="${cfg}" fields="${['lidar_rate','imu_rate','mass','size_x','size_y','size_z','collision_body_height','measurement_z','range_max']}"/>
+    <xacro:livox_check_number value="${cfg['range_min']}" field="range_min"/>
+    <xacro:livox_require condition="${0 &lt;= cfg['range_min'] &lt; cfg['range_max'] and cfg['measurement_z'] &lt;= cfg['size_z'] and cfg['mass'] > 0.000002 and cfg['lidar_rate'] &lt;= 1000000 and cfg['imu_rate'] &lt;= 1000000}" message="Invalid range, origin, mass or update rate"/>
+    <xacro:livox_check_vector value="${cfg['imu_xyz']}" field="imu_xyz"/>
+    <xacro:livox_check_vector value="${cfg['imu_from_lidar_xyz']}" field="imu_from_lidar_xyz"/>
+    <xacro:livox_require condition="${python.all(math.isclose(a,b,abs_tol=1e-8) for a,b in python.zip(cfg['imu_from_lidar_xyz'],[cfg['imu_xyz'][0],cfg['imu_xyz'][1],cfg['imu_xyz'][2]-cfg['measurement_z']]))}" message="IMU offsets disagree with measurement origin"/>
+    <xacro:livox_require condition="${python.type(cfg['connector_collision']) == bool}" message="connector_collision must be boolean"/>
+    <xacro:if value="${cfg['connector_collision']}">
+      <xacro:livox_check_vector value="${cfg['connector']['xyz']}" field="connector.xyz"/>
+      <xacro:livox_check_vector value="${cfg['connector']['rpy']}" field="connector.rpy"/>
+      <xacro:livox_require condition="${cfg['connector']['shape'] in ['box','cylinder']}" message="Unsupported connector shape"/>
+      <xacro:if value="${cfg['connector']['shape'] == 'box'}">
+        <xacro:livox_check_vector value="${cfg['connector']['size']}" field="connector.size"/>
+        <xacro:livox_require condition="${python.all(float(v)>0 for v in cfg['connector']['size'].split())}" message="Connector size must be positive"/>
+      </xacro:if>
+      <xacro:if value="${cfg['connector']['shape'] == 'cylinder'}">
+        <xacro:livox_check_fields cfg="${cfg['connector']}" fields="${['radius','length']}"/>
+      </xacro:if>
+    </xacro:if>
+  </xacro:macro>
+</robot>

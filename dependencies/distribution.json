@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "asset": "avia_cad",
+      "status": "pending",
+      "evidence": "",
+      "reason": "Public redistribution terms for the CAD-derived Avia assets are unconfirmed.",
+      "notice": "meshes/avia/NOTICE.md"
+    },
+    {
+      "asset": "rgl_runtime",
+      "status": "pending",
+      "evidence": "",
+      "reason": "Redistribution review of the precompiled runtime and its dependencies is incomplete.",
+      "notice": "THIRD_PARTY_NOTICES.md"
+    }
+  ]
+}

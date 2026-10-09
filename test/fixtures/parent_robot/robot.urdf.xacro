@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot name="parent_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="base_link">
+    <inertial><mass value="10"/><inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/></inertial>
+    <visual><origin xyz="0 0 0.5"/><geometry><box size="0.4 0.4 0.1"/></geometry></visual>
+    <collision><origin xyz="0 0 0.5"/><geometry><box size="0.4 0.4 0.1"/></geometry></collision>
+  </link>
+  <xacro:include filename="$(find livox_lidar_simulation_gz)/urdf/livox.xacro"/>
+  <!-- Default naming contract and explicit override are exercised together. -->
+  <xacro:livox_lidar parent="base_link" name="front" namespace="robot" model="mid360" xyz="0.2 -0.3 1"/>
+  <xacro:livox_lidar parent="base_link" name="rear" namespace="robot" model="avia" xyz="0.4 0.3 1"
+    points_topic="/sensors/avia/cloud" imu_topic="/sensors/avia/inertial"/>
+  <gazebo><static>true</static></gazebo>
+</robot>

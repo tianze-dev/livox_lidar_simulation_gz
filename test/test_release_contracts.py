@@ -27,7 +27,7 @@ def test_avia_is_not_mid360_appearance(monkeypatch):
     assert robot.find('.//mesh').get('filename').endswith('/meshes/avia/avia.dae')
     assert robot.find(".//visual[@name='avia_cover_visual']") is None
     assert len(robot.findall('.//collision')) == 2
-    assert robot.find('.//pattern_preset').text == 'Livox Avia'
+    assert robot.find('.//pattern_preset_path').text.endswith('/LivoxAvia.mat3x4f')
 
 
 def test_avia_primitive_is_removed(monkeypatch):

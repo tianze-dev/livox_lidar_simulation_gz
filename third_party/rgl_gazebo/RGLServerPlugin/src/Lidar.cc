@@ -15,6 +15,8 @@
 // Modified 2026-10-08: validate inputs, handle clock resets and empty results.
 #include <cmath>
 #include <cstdio>
+#include <algorithm>
+#include <set>
 
 #include "RGLServerPluginInstance.hh"
 #include "Utils.hh"
@@ -132,7 +134,9 @@ void RGLServerPluginInstance::CreateLidar(gz::sim::Entity entity,
                                                lidarPattern.data() + i,
                                                lidarPatternSampleSize))) {
           gzerr << "Failed to create RGL nodes when initializing lidar. Disabling plugin.\n";
+          DestroyLidar();
           return;
+
       }
     }
 
@@ -146,40 +150,55 @@ void RGLServerPluginInstance::CreateLidar(gz::sim::Entity entity,
         !CheckRGL(rgl_node_points_transform(&rglNodeToLidarFrame, &identity))) {
 
         gzerr << "Failed to create RGL nodes when initializing lidar. Disabling plugin.\n";
+        DestroyLidar();
         return;
+
     }
 
-    if (!CheckRGL(rgl_graph_node_add_child(rglNodesUseRays.front(), rglNodeSetRange)) ||
-        !CheckRGL(rgl_graph_node_add_child(rglNodeSetRange, rglNodeLidarPose)) ||
-        !CheckRGL(rgl_graph_node_add_child(rglNodeLidarPose, rglNodeRaytrace)) ||
-        !CheckRGL(rgl_graph_node_add_child(rglNodeRaytrace, rglNodeCompact)) ||
-        !CheckRGL(rgl_graph_node_add_child(rglNodeCompact, rglNodeFormatPointCloudWorld))) {
+    if (!Connect(rglNodesUseRays.front(), rglNodeSetRange) ||
+        !Connect(rglNodeSetRange, rglNodeLidarPose) ||
+        !Connect(rglNodeLidarPose, rglNodeRaytrace) ||
+        !Connect(rglNodeRaytrace, rglNodeCompact) ||
+        !Connect(rglNodeCompact, rglNodeFormatPointCloudWorld)) {
 
         gzerr << "Failed to connect RGL nodes when initializing lidar. Disabling plugin.\n";
+        DestroyLidar();
         return;
+
     }
 
     if (publishLaserScan) {
-        if(!CheckRGL(rgl_graph_node_add_child(rglNodeRaytrace, rglNodeYieldLaserScan)) ||
+        if(!Connect(rglNodeRaytrace, rglNodeYieldLaserScan) ||
            // Optimization: rglNodeYieldLaserScan should be prioritized because it will be requested first
            !CheckRGL(rgl_graph_node_set_priority(rglNodeYieldLaserScan, 1))) {
             gzerr << "Failed to connect RGL nodes when initializing lidar. Disabling plugin.\n";
+            DestroyLidar();
+            return;
         }
         gzmsg << "Start publishing LaserScan messages on topic '" << topicName << "'\n";
         laserScanPublisher = gazeboNode.Advertise<gz::msgs::LaserScan>(topicName);
     } else {  // publish PointCloud
-        if(!CheckRGL(rgl_graph_node_add_child(rglNodeCompact, rglNodeToLidarFrame)) ||
-           !CheckRGL(rgl_graph_node_add_child(rglNodeToLidarFrame, rglNodeFormatPointCloudSensor)) ||
+        if(!Connect(rglNodeCompact, rglNodeToLidarFrame) ||
+           !Connect(rglNodeToLidarFrame, rglNodeFormatPointCloudSensor) ||
            // Optimization: rglNodeFormatPointCloudSensor should be prioritized because it will be requested first
            !CheckRGL(rgl_graph_node_set_priority(rglNodeFormatPointCloudSensor, 1))) {
             gzerr << "Failed to connect RGL nodes when initializing lidar. Disabling plugin.\n";
+            DestroyLidar();
+            return;
         }
         gzmsg << "Start publishing PointCloudPacked messages on topic '" << topicName << "'\n";
         pointCloudPublisher = gazeboNode.Advertise<gz::msgs::PointCloudPacked>(topicName);
     }
     pointCloudWorldPublisher = gazeboNode.Advertise<gz::msgs::PointCloudPacked>(topicName + worldTopicPostfix);
 
+    if ((!publishLaserScan && !pointCloudPublisher) ||
+        (publishLaserScan && !laserScanPublisher) || !pointCloudWorldPublisher) {
+        gzerr << "Invalid publisher topic. Disabling RGL sensor.\n";
+        DestroyLidar();
+        return;
+    }
     isLidarInitialized = true;
+    gzmsg << "RGL sensor ready: frame=" << frameId << ", topic=" << topicName << "\n";
 }
 
 void RGLServerPluginInstance::UpdateLidarPose(const gz::sim::EntityComponentManager& ecm)
@@ -195,18 +214,20 @@ void RGLServerPluginInstance::UpdateLidarPose(const gz::sim::EntityComponentMana
 void RGLServerPluginInstance::UpdateAlternatingLidarPattern()
 {
     // remove old child
-    if(!CheckRGL(rgl_graph_node_remove_child(rglNodesUseRays[alternatingPatternIndex], rglNodeSetRange)))
+    if(!Disconnect(rglNodesUseRays[alternatingPatternIndex], rglNodeSetRange))
     {
         gzerr << "Failed to update alternating lidar pattern, not able to remove child.\n";
+        DestroyLidar();
         return;
     }
 
     alternatingPatternIndex = (alternatingPatternIndex + 1) % rglNodesUseRays.size();
 
     // add new child
-    if(!CheckRGL(rgl_graph_node_add_child(rglNodesUseRays[alternatingPatternIndex], rglNodeSetRange)))
+    if(!Connect(rglNodesUseRays[alternatingPatternIndex], rglNodeSetRange))
     {
         gzerr << "Failed to update alternating lidar pattern, not able to add new child.\n";
+        DestroyLidar();
         return;
     }
 }
@@ -244,6 +265,7 @@ void RGLServerPluginInstance::RayTrace(std::chrono::steady_clock::duration simTi
 {
     if (rglNodesUseRays.size() > 1) {
         UpdateAlternatingLidarPattern();
+        if (!isLidarInitialized) return;
     }
 
     lastRaytraceTime = simTime;
@@ -349,23 +371,54 @@ gz::msgs::PointCloudPacked RGLServerPluginInstance::CreatePointCloudMsg(std::chr
     return outMsg;
 }
 
+bool RGLServerPluginInstance::Connect(rgl_node_t parent, rgl_node_t child)
+{
+    if (!CheckRGL(rgl_graph_node_add_child(parent, child))) return false;
+    graphEdges.emplace_back(parent, child);
+    return true;
+}
+
+bool RGLServerPluginInstance::Disconnect(rgl_node_t parent, rgl_node_t child)
+{
+    if (!CheckRGL(rgl_graph_node_remove_child(parent, child))) return false;
+    std::erase(graphEdges, std::make_pair(parent, child));
+    return true;
+}
+
 void RGLServerPluginInstance::DestroyLidar()
 {
-    if (!isLidarInitialized) {
-        return;
-    }
-
-    if (!CheckRGL(rgl_graph_destroy(rglNodeRaytrace))) {
-        gzerr << "Failed to destroy RGL lidar.\n";
-    }
-    // Reset publishers
-    if (!publishLaserScan) {
-        pointCloudPublisher = gz::transport::Node::Publisher();
-    } else {
-        laserScanPublisher = gz::transport::Node::Publisher();
-    }
-    pointCloudWorldPublisher = gz::transport::Node::Publisher();
+    // graph_destroy frees a connected component, not only the supplied node.
+    // Track successful edges so partial initialization and detached pattern rays
+    // are freed exactly once, including when isLidarInitialized is still false.
     isLidarInitialized = false;
+    std::set<rgl_node_t> remaining(rglNodesUseRays.begin(), rglNodesUseRays.end());
+    for (auto node : {rglNodeLidarPose, rglNodeSetRange, rglNodeRaytrace,
+                     rglNodeCompact, rglNodeYieldLaserScan, rglNodeFormatPointCloudSensor,
+                     rglNodeFormatPointCloudWorld, rglNodeToLidarFrame}) remaining.insert(node);
+    remaining.erase(nullptr);
+    while (!remaining.empty()) {
+        auto root = *remaining.begin();
+        std::vector<rgl_node_t> pending{root};
+        remaining.erase(root);
+        while (!pending.empty()) {
+            auto node = pending.back();
+            pending.pop_back();
+            for (auto [parent, child] : graphEdges) {
+                auto other = parent == node ? child : (child == node ? parent : nullptr);
+                if (other && remaining.erase(other)) pending.push_back(other);
+            }
+        }
+        if (!CheckRGL(rgl_graph_destroy(root))) gzerr << "Failed to destroy RGL graph component.\n";
+    }
+    graphEdges.clear();
+    rglNodesUseRays.clear();
+    rglNodeLidarPose = rglNodeSetRange = rglNodeRaytrace = rglNodeCompact = nullptr;
+    rglNodeYieldLaserScan = rglNodeFormatPointCloudSensor = nullptr;
+    rglNodeFormatPointCloudWorld = rglNodeToLidarFrame = nullptr;
+    pointCloudPublisher = gz::transport::Node::Publisher();
+    laserScanPublisher = gz::transport::Node::Publisher();
+    pointCloudWorldPublisher = gz::transport::Node::Publisher();
+    alternatingPatternIndex = 0;
 }
 
 }  // namespace rgl

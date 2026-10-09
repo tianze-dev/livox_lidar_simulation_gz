@@ -1,6 +1,7 @@
 """Small shared contract used by launch files and tests."""
 
 import math
+import json
 from pathlib import Path
 import re
 
@@ -11,32 +12,76 @@ def load_model(share, model):
     if model not in ('mid360', 'avia'):
         raise ValueError(f'Unsupported model: {model}; available: mid360, avia')
     config = yaml.safe_load((Path(share) / 'config/models' / f'{model}.yaml').read_text())
-    if config['model'] != model or config.get('schema_version') != 1:
+    if not isinstance(config, dict) or config.get('model') != model or type(config.get('schema_version')) is not int or config['schema_version'] != 1:
         raise ValueError('Model/config mismatch')
-    for key in ('lidar_rate', 'imu_rate', 'mass', 'size_x', 'size_y', 'size_z'):
-        value = float(config[key])
-        if not math.isfinite(value) or value <= 0:
-            raise ValueError(f'{key} must be finite and positive')
-    low, high = float(config['range_min']), float(config['range_max'])
-    if not (math.isfinite(low) and math.isfinite(high) and 0 <= low < high):
+    layout = json.loads((Path(share) / 'dependencies/lock.json').read_text())['scan_presets'][model]
+    if set(config) & set(layout):
+        raise ValueError('Scan layout is read-only; edit dependencies/lock.json with the matching preset')
+    for key in ('pattern_groups', 'rays_per_frame'):
+        if type(layout[key]) is not int or layout[key] <= 0:
+            raise ValueError(f'{key} must be a positive integer')
+    if Path(layout['pattern_file']).name != layout['pattern_file']:
+        raise ValueError('Pattern filename must not contain a path')
+    config.update(layout)
+    for key in ('lidar_rate', 'imu_rate', 'mass', 'size_x', 'size_y', 'size_z',
+                'collision_body_height', 'measurement_z', 'range_max'):
+        number(config.get(key), key, positive=True)
+    low, high = number(config.get('range_min'), 'range_min'), config['range_max']
+    if not 0 <= low < high:
         raise ValueError('Invalid range')
+    if config['mass'] <= 0.000002 or config['lidar_rate'] > 1e6 or config['imu_rate'] > 1e6:
+        raise ValueError('Mass or update rate exceeds supported limits')
     for key in ('imu_xyz', 'imu_from_lidar_xyz'):
         vector3(config[key], key)
+        for value in config[key]:
+            number(value, key)
     if not 0 < config['measurement_z'] <= config['size_z']:
         raise ValueError('Invalid measurement origin')
-    if config['rays_per_frame'] <= 0 or config['pattern_groups'] <= 0:
-        raise ValueError('Invalid pattern layout')
+    expected = [config['imu_xyz'][0], config['imu_xyz'][1], config['imu_xyz'][2] - config['measurement_z']]
+    if not all(math.isclose(a, b, abs_tol=1e-8) for a, b in zip(expected, config['imu_from_lidar_xyz'])):
+        raise ValueError('IMU offsets disagree with measurement origin')
+    if type(config.get('connector_collision')) is not bool:
+        raise ValueError('connector_collision must be boolean')
+    if config['connector_collision']:
+        connector = config.get('connector', {})
+        vector3(connector.get('xyz'), 'connector.xyz')
+        vector3(connector.get('rpy'), 'connector.rpy')
+        if connector.get('shape') == 'cylinder':
+            for key in ('radius', 'length'):
+                number(connector.get(key), 'connector.' + key, positive=True)
+        elif connector.get('shape') == 'box':
+            if not all(float(v) > 0 for v in vector3(connector.get('size'), 'connector.size').split()):
+                raise ValueError('connector.size must be positive')
+        else:
+            raise ValueError('Unsupported connector shape')
     return config
 
 
-def sensor_topics(namespace, name):
+def number(value, field, positive=False):
+    if type(value) not in (int, float) or not math.isfinite(value) or (positive and value <= 0):
+        raise ValueError(f'{field} must be a finite number' + (' greater than zero' if positive else ''))
+    return value
+
+
+def sensor_topics(namespace, name, points_topic='', imu_topic=''):
     if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', name):
         raise ValueError('Sensor name must start with a letter and use letters/digits/underscores')
     namespace = namespace.strip('/')
     if namespace and not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*(/[A-Za-z_][A-Za-z0-9_]*)*', namespace):
         raise ValueError('Invalid namespace')
     root = '/' + '/'.join(part for part in (namespace, name) if part)
-    return root + '/points', root + '/imu'
+    topics = (points_topic or root + '/points', imu_topic or root + '/imu')
+    for topic in topics:
+        validate_topic(topic)
+    if topics[0] == topics[1]:
+        raise ValueError('Point cloud and IMU topics must be different')
+    return topics
+
+
+def validate_topic(topic):
+    if not isinstance(topic, str) or not re.fullmatch(r'(/[A-Za-z_][A-Za-z0-9_]*)+', topic):
+        raise ValueError('Topics must be absolute ROS-compatible paths')
+    return topic
 
 
 def boolean(value):
@@ -74,19 +119,20 @@ def load_sensors(share, sensors_file='', defaults=None):
     if not isinstance(rows, list) or not rows:
         raise ValueError('sensors must be a nonempty list')
     baseline = dict(model='mid360', name='mid360', namespace='livox',
-                    xyz='0 0 1', rpy='0 0 0', visual_mesh='', mesh_rpy='0 0 0')
+                    xyz='0 0 1', rpy='0 0 0', visual_mesh='', mesh_rpy='0 0 0',
+                    points_topic='', imu_topic='')
     names, topics, result = set(), set(), []
     for row in rows:
         if not isinstance(row, dict) or set(row) - set(baseline):
             raise ValueError('Invalid sensor instance or unknown keys')
         item = {**baseline, **row}
-        for field in ('model', 'name', 'namespace', 'visual_mesh'):
+        for field in ('model', 'name', 'namespace', 'visual_mesh', 'points_topic', 'imu_topic'):
             if not isinstance(item[field], str):
                 raise ValueError(f'{field} must be a string')
         load_model(share, item['model'])
         if item['model'] == 'avia' and item['visual_mesh'] == 'primitive':
             raise ValueError('Avia primitive appearance has been removed; use the detailed mesh')
-        points, imu = sensor_topics(item['namespace'], item['name'])
+        points, imu = sensor_topics(item['namespace'], item['name'], item['points_topic'], item['imu_topic'])
         if item['name'] in names:
             raise ValueError(f'Duplicate sensor name / TF prefix: {item["name"]}')
         if points in topics or imu in topics:

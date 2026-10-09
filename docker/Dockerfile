@@ -10,7 +10,8 @@ WORKDIR /workspace/src/livox_lidar_simulation_gz
 COPY . .
 RUN python3 scripts/fetch_dependencies.py && \
     source /opt/ros/jazzy/setup.bash && CMAKE_BUILD_PARALLEL_LEVEL=2 bash scripts/build.sh && \
-    source install/local_setup.bash && ctest --test-dir build/livox_lidar_simulation_gz --output-on-failure
+    source install/local_setup.bash && ctest --test-dir build/livox_lidar_simulation_gz --output-on-failure && \
+    python3 scripts/release_check.py --install-prefix "$(ros2 pkg prefix livox_lidar_simulation_gz)"
 ENV NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
 ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/jazzy/setup.bash && source install/local_setup.bash && exec \"$@\"", "--"]
 CMD ["ros2", "launch", "livox_lidar_simulation_gz", "demo.launch.py", "gui:=false", "rviz:=false"]

@@ -36,7 +36,7 @@ python3 scripts/release_check.py
 git diff --check
 ```
 
-普通 CTest 执行单元测试；GPU 运行测试独立执行，结果写入忽略的 `run/`。检查脚本需要本仓库的本地构建；父工作空间可使用其构建目录执行 CTest，并在加载父安装环境后直接运行 `test/*_runtime.py`。
+普通 CTest 执行 Python 单元测试和无 GPU 的 C++ 初始化故障注入；GPU 运行测试包含临时独立父工作空间的构建与实际接入，且独立执行，结果写入忽略的 `run/`。检查脚本需要本仓库的本地构建；父工作空间可使用其构建目录执行 CTest，并在加载父安装环境后直接运行 `test/*_runtime.py`。
 
 | 变更 | 验证要求 |
 |---|---|
@@ -51,10 +51,12 @@ CPU CI 使用 Dockerfile 构建并运行单元测试，不代替 GPU、GUI 或�
 
 新增型号需提供参数与预设来源、版本和哈希、可分发的模型、材质、碰撞体、安装与测量坐标、IMU 外参、示例和回归测试。缺少实物依据的参数标为近似；预设存在不等于型号完整支持。
 
-运行资产仅保留 DAE、精简的几何校验信息和来源声明。模型制作源及转换工具独立维护，不作为构建或测试前提。更新网格时同步更新哈希与几何数据，并检查 Gazebo 和 RViz 的显示效果。
+运行资产保留 DAE、可选 GLB、精简的几何校验信息和来源声明。模型制作源及转换工具独立维护，不作为构建或测试前提。更新网格时同步更新哈希与几何数据，并检查 Gazebo 和 RViz 的显示效果。
 
 ## 提交与许可
 
 本项目在 `main` 分支开发。提交标题使用 `type(scope): 描述`，scope 可省略；类型包括 feat、fix、docs、refactor、test、build、chore。提交说明包含验证结果及未执行项。
+
+`python3 scripts/release_check.py --install-prefix "$(ros2 pkg prefix livox_lidar_simulation_gz)"` 检查安装资源和技术元信息。正式发行前运行 `python3 scripts/release_check.py --release`；`dependencies/distribution.json` 中未解决的分发审查会阻止通过。批准记录必须包含实际审查依据，不得为通过检查而改状态。
 
 原创代码采用 [Apache-2.0](LICENSE)。引入第三方内容时更新 [来源清单](THIRD_PARTY_NOTICES.md)，保留适用声明；公开发行前核实资产分发条件与 `package.xml` 中的维护者信息。

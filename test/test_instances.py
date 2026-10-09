@@ -19,6 +19,13 @@ def test_dual_configuration():
     assert sensors[1]['xyz'] == '1.0 0.0 1.0'
 
 
+def test_custom_instance_topics():
+    sensors = load_sensors(ROOT, defaults=dict(name='custom',
+        points_topic='/sensor/cloud', imu_topic='/sensor/inertial'))
+    assert sensors[0]['points_topic'] == '/sensor/cloud'
+    assert sensors[0]['imu_topic'] == '/sensor/inertial'
+
+
 @pytest.mark.parametrize('value', ['0 0', '0 0 nan', [0, float('inf'), 0], [0, True, 1], None])
 def test_reject_invalid_pose(value):
     with pytest.raises(ValueError):
@@ -30,6 +37,8 @@ def test_reject_invalid_pose(value):
     {'sensors': [{'name': 'x'}, {'name': 'x', 'namespace': 'another'}]},
     {'sensors': [{'name': 'x', 'rate_typo': 10}]},
     {'sensors': [{'name': 1}]}, {'sensors': [{'model': 'hap'}]},
+    {'sensors': [{'name': 'a', 'points_topic': '/shared/cloud'},
+                 {'name': 'b', 'points_topic': '/shared/cloud'}]},
 ])
 def test_reject_invalid_instance_file(tmp_path, data):
     path = tmp_path / 'sensors.yaml'
