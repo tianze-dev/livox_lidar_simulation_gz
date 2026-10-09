@@ -1,6 +1,7 @@
 # https://www.livoxtech.com/avia/specs
 # Official CAD-derived appearance: housing dimensions/mass and scan data are sourced;
-# mounting/measurement/IMU origins are explicit geometric approximations.
+# Manual Fig. 5.1.1: IMU relative to lidar (-41.65,-23.26,28.40) mm.
+# Lidar frame is registered to the CAD front-window center (not device calibration).
 schema_version: 1
 model: avia
 connector_collision: true
@@ -12,19 +13,21 @@ connector:
 # Scan layout is locked in dependencies/lock.json, not a tunable model parameter.
 lidar_rate: 10.0
 imu_rate: 200.0
-range_min: 0.1
+range_min: 1.0
 range_max: 190.0
 mass: 0.498
 size_x: 0.091
 size_y: 0.0612
 size_z: 0.0648
-measurement_z: 0.0324
-imu_xyz: [0, 0, 0.0324]
-imu_from_lidar_xyz: [0, 0, 0]
+measurement_xyz: [0.04533, 0, 0.0324]
+imu_xyz: [0.00368, -0.02326, 0.0608]
+imu_from_lidar_xyz: [-0.04165, -0.02326, 0.0284]
 visual_mesh: package://livox_lidar_simulation_gz/meshes/avia/avia.dae
 collision_body_height: 0.0648
-geometry_status: official_cad_mesh_geometric_mount_approximate_extrinsics
+geometry_status: official_cad_mesh_manual_frame_registration
 inertia_status: uniform_box_approximation
-imu_extrinsics_status: uncalibrated_approximation
+imu_extrinsics_status: official_manual_nominal_not_device_calibrated
+measurement_origin_status: manual_frame_registered_to_cad_window
+range_min_semantics: conservative_1m_cutoff_not_near_field_error_model
 intensity_semantics: gazebo_laser_retro_not_hardware_reflectivity
 range_semantics: fixed_cutoff_not_reflectivity_dependent_detection

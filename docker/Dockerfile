@@ -2,7 +2,7 @@
 FROM ros:jazzy-ros-base@sha256:066420e07f60aa18262f2479981def87ebcfcec42eefb0c0c57c4a46098348ca
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential cmake git python3-colcon-common-extensions python3-pytest python3-numpy \
+    build-essential cmake git python3-colcon-common-extensions python3-pytest python3-numpy python3-pil \
     ros-jazzy-ros-gz ros-jazzy-rviz2 ros-jazzy-xacro ros-jazzy-robot-state-publisher \
     ros-jazzy-sensor-msgs-py ros-jazzy-ament-cmake-pytest \
     && rm -rf /var/lib/apt/lists/*

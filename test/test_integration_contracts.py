@@ -58,7 +58,7 @@ def test_invalid_topic_rejected_by_both_paths(monkeypatch, topic):
 @pytest.mark.parametrize('field,value', [
     ('mass', True), ('mass', 1e-7), ('mass', '0.2'), ('mass', float('nan')),
     ('lidar_rate', float('inf')), ('lidar_rate', 0), ('imu_rate', -1),
-    ('size_x', -1), ('measurement_z', False), ('measurement_z', 1),
+    ('size_x', -1), ('measurement_xyz', False), ('measurement_xyz', [0, 0, 1]),
     ('range_min', True), ('range_min', -1), ('range_max', float('nan')),
     ('imu_xyz', [0, True, 0]), ('imu_from_lidar_xyz', [0, 0, 0]),
     ('connector_collision', 1), ('pattern_groups', 1.5), ('rays_per_frame', float('nan')),

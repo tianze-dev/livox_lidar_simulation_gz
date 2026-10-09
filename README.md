@@ -21,7 +21,7 @@ Avia 扫描点云在 RViz 中的显示效果，颜色表示高度：
 | 型号 | 射线数／帧 | 点云频率 | IMU 频率 | 仿真量程 |
 |---|---:|---:|---:|---:|
 | MID-360 | 20,000 | 10 Hz | 200 Hz | 0.1–40 m |
-| Avia | 24,000 | 10 Hz | 200 Hz | 0.1–190 m |
+| Avia | 24,000 | 10 Hz | 200 Hz | 1–190 m |
 
 频率按仿真时间计算；点云仅包含命中点。外观默认使用 DAE，也提供[可选 PBR GLB](docs/INTEGRATION.md#可选-glb-外观)。
 
@@ -150,7 +150,7 @@ ros2 launch livox_lidar_simulation_gz sensor.launch.py \
 
 接入后可在 RViz 添加 PointCloud2，选择 `/robot/front/points`，将 Fixed Frame 设为 `base_link` 或已有的 `odom`。切换 Avia 时，将挂载宏和桥接命令的 `model` 都改为 `avia`。自定义外观、GLB 和更多参数见[接入指南](docs/INTEGRATION.md)。
 
-本包采用整帧快照扫描和理想 IMU，暂不提供逐点时间、运动畸变、CustomMsg 或 FAST-LIVO2 接入。MID-360 外参采用手册名义值，Avia 外参为近似值；详细参数与限制见[支持范围](docs/SUPPORT.md)。
+本包采用整帧快照扫描和理想 IMU，暂不提供逐点时间、运动畸变、CustomMsg 或 FAST-LIVO2 接入。两款 IMU 外参采用手册名义值，Avia 测量原点按坐标图配准到 CAD 前窗；详细参数与限制见[支持范围](docs/SUPPORT.md)。
 
 ## 测试与贡献
 

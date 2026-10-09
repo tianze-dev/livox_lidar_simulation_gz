@@ -47,6 +47,21 @@ git diff --check
 
 CPU CI 使用 Dockerfile 构建并运行单元测试，不代替 GPU、GUI 或性能测试。没有 GPU 时应明确标记运行测试未执行。环境检查与发布元信息检查也不代表仿真已运行通过。
 
+## Avia 专项验证
+
+```bash
+# 需要 GPU；检查近远端截断、空点云、视场及普通物体遮挡
+python3 test/avia_runtime.py
+# 真实 Gazebo 相机采集前后视图；图片写入 run，不作为渲染一致性的自动证明
+python3 test/avia_visual_runtime.py --format dae --output run/avia_visual/dae
+python3 test/avia_visual_runtime.py --format glb --output run/avia_visual/glb
+# 10 分钟静态稳定性；移动夹具只运行短轨迹
+python3 test/release_runtime.py --model avia --seconds 600 --output run/avia_endurance
+python3 test/release_runtime.py --model avia --moving --seconds 6 --output run/avia_moving
+```
+
+可视测试需要 Gazebo 的 Ogre2 渲染后端和 `python3-pil`。截图须人工检查外壳、窗口、法线和朝向；不能以颜色不同推断扫描失败，也不能将普通物体遮挡测试等同于雷达外壳之间的遮挡。
+
 ## 型号与资产
 
 新增型号需提供参数与预设来源、版本和哈希、可分发的模型、材质、碰撞体、安装与测量坐标、IMU 外参、示例和回归测试。缺少实物依据的参数标为近似；预设存在不等于型号完整支持。

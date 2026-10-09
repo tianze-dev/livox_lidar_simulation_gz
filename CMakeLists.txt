@@ -55,6 +55,8 @@ ament_environment_hooks(hooks/livox_gz.dsv.in)
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(unit_tests test TIMEOUT 60)
+  set_tests_properties(unit_tests PROPERTIES
+    ENVIRONMENT "LIVOX_TEST_PATTERN_DIR=${LIVOX_RGL_CACHE}/patterns")
   add_executable(rgl_initialization_test test/rgl_initialization_test.cc
     ${upstream}/src/RGLServerPluginInstance.cc ${upstream}/src/Lidar.cc
     ${upstream}/src/Utils.cc ${upstream}/src/LidarPatternLoader.cc)

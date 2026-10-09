@@ -21,7 +21,7 @@ Avia scan pattern displayed in RViz, colored by height:
 | Model | Rays per frame | Point cloud rate | IMU rate | Simulated range |
 |---|---:|---:|---:|---:|
 | MID-360 | 20,000 | 10 Hz | 200 Hz | 0.1–40 m |
-| Avia | 24,000 | 10 Hz | 200 Hz | 0.1–190 m |
+| Avia | 24,000 | 10 Hz | 200 Hz | 1–190 m |
 
 Rates use simulation time; only ray hits are published. DAE is the default appearance format; [optional PBR GLB assets](docs/INTEGRATION.md#可选-glb-外观) are also included.
 
@@ -150,7 +150,7 @@ The robot's `robot_state_publisher` publishes the fixed transforms `base_link �
 
 In RViz, add PointCloud2, select `/robot/front/points` and use `base_link` or an existing `odom` as the Fixed Frame. For Avia, change `model` to `avia` in both the macro and bridge command. See the [integration guide](docs/INTEGRATION.md) for custom meshes, GLB and additional options.
 
-The simulator uses whole-frame snapshots and an ideal IMU. Per-point timing, motion distortion, CustomMsg and FAST-LIVO2 integration are not provided. MID-360 extrinsics use manufacturer nominal values; Avia extrinsics are approximations. See [support details](docs/SUPPORT.md) for parameters and limitations.
+The simulator uses whole-frame snapshots and an ideal IMU. Per-point timing, motion distortion, CustomMsg and FAST-LIVO2 integration are not provided. Both IMU offsets use manual nominal values; the Avia lidar frame is registered to the CAD window using the manual coordinate diagram. See [support details](docs/SUPPORT.md) for parameters and limitations.
 
 ## Tests and contributions
 

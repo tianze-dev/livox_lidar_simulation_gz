@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import xml.etree.ElementTree as ET
 import yaml
+from .configuration import load_model
 
 
 def prepare_demo_world(share, robot_description, name):
@@ -64,9 +65,11 @@ def prepare_rviz(share, directory, sensors, focus_model=False):
             if display['Class'] in ('rviz_default_plugins/Grid', 'rviz_default_plugins/TF'):
                 display['Enabled'] = False
         x, y, z = map(float, sensors[0]['xyz'].split())
+        model = load_model(share, sensors[0]['model'])
+        distance = .18 * max(1.0, max(model['size_x'], model['size_y'], model['size_z'])/.065)
         view = config['Visualization Manager']['Views']['Current']
-        view.update({'Distance': 0.18, 'Near Clip Distance': 0.001,
-                     'Focal Point': {'X': x, 'Y': y, 'Z': z + 0.03}})
+        view.update({'Distance': distance, 'Near Clip Distance': 0.001,
+                     'Focal Point': {'X': x, 'Y': y, 'Z': z + model['size_z']/2}})
     path = Path(directory) / 'demo.rviz'
     path.write_text(yaml.safe_dump(config, sort_keys=False))
     return path

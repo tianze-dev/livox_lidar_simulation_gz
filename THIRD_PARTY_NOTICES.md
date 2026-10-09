@@ -11,7 +11,7 @@
 | MID-360 模型 | 官方 STL 衍生的彩色 DAE 和可选 PBR GLB | 所有者确认的分发依据、原文件哈希和外参来源见 [模型 NOTICE](meshes/mid360/NOTICE.md) |
 | Avia 模型 | 官方 STEP 衍生的彩色 DAE 和可选 PBR GLB | [模型 NOTICE](meshes/avia/NOTICE.md) 记录来源与变换；公开再分发条件尚待确认，不适用 MID-360 的既有确认 |
 
-简化外观与测试世界由本项目使用基础几何体描述。模型颜色和惯量是近似值；MID-360 使用手册名义外参，Avia 使用明确标注的几何近似原点。原始 CAD、参考照片和手册不随运行资源分发。
+简化外观与测试世界由本项目使用基础几何体描述。模型颜色和惯量是近似值；两款 IMU 相对雷达的位移采用手册名义值；Avia 雷达原点按手册图示与 CAD 前窗配准，不代替实物标定。原始 CAD、参考照片和手册不随运行资源分发。
 
 可机读审查状态见 `dependencies/distribution.json`。`scripts/release_check.py --release` 在未解决或没有审查依据时返回失败；普通技术检查通过不代表分发许可已确认。
 

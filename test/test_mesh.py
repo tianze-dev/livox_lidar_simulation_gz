@@ -39,8 +39,8 @@ def test_registered_mesh_and_collision_envelope():
 
 def test_official_imu_offset():
     config = yaml.safe_load((ROOT / 'config/models/mid360.yaml').read_text())
-    assert config['measurement_z'] == .047
-    lidar = np.array([0, 0, config['measurement_z']])
+    assert config['measurement_xyz'] == [0, 0, .047]
+    lidar = np.array(config['measurement_xyz'])
     assert np.allclose(np.array(config['imu_xyz']) - lidar, [.011, .02329, -.04412])
 
 

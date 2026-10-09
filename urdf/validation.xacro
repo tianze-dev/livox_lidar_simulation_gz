@@ -39,12 +39,14 @@
     <xacro:livox_require condition="${not (python.set(cfg) &amp; python.set(preset))}" message="Scan layout is read-only; use dependencies/lock.json"/>
     <xacro:livox_require condition="${python.type(preset['pattern_groups']) == int and preset['pattern_groups'] > 0 and python.type(preset['rays_per_frame']) == int and preset['rays_per_frame'] > 0}" message="Scan layout requires positive integers"/>
     <xacro:livox_require condition="${'/' not in preset['pattern_file'] and '..' not in preset['pattern_file']}" message="Invalid pattern filename"/>
-    <xacro:livox_check_fields cfg="${cfg}" fields="${['lidar_rate','imu_rate','mass','size_x','size_y','size_z','collision_body_height','measurement_z','range_max']}"/>
+    <xacro:livox_check_fields cfg="${cfg}" fields="${['lidar_rate','imu_rate','mass','size_x','size_y','size_z','collision_body_height','range_max']}"/>
     <xacro:livox_check_number value="${cfg['range_min']}" field="range_min"/>
-    <xacro:livox_require condition="${0 &lt;= cfg['range_min'] &lt; cfg['range_max'] and cfg['measurement_z'] &lt;= cfg['size_z'] and cfg['mass'] > 0.000002 and cfg['lidar_rate'] &lt;= 1000000 and cfg['imu_rate'] &lt;= 1000000}" message="Invalid range, origin, mass or update rate"/>
+    <xacro:livox_require condition="${0 &lt;= cfg['range_min'] &lt; cfg['range_max'] and cfg['mass'] > 0.000002 and cfg['lidar_rate'] &lt;= 1000000 and cfg['imu_rate'] &lt;= 1000000}" message="Invalid range, mass or update rate"/>
+    <xacro:livox_check_vector value="${cfg['measurement_xyz']}" field="measurement_xyz"/>
+    <xacro:livox_require condition="${python.abs(cfg['measurement_xyz'][0]) &lt;= cfg['size_x']/2 and python.abs(cfg['measurement_xyz'][1]) &lt;= cfg['size_y']/2 and 0 &lt; cfg['measurement_xyz'][2] &lt;= cfg['size_z']}" message="Invalid measurement origin"/>
     <xacro:livox_check_vector value="${cfg['imu_xyz']}" field="imu_xyz"/>
     <xacro:livox_check_vector value="${cfg['imu_from_lidar_xyz']}" field="imu_from_lidar_xyz"/>
-    <xacro:livox_require condition="${python.all(math.isclose(a,b,abs_tol=1e-8) for a,b in python.zip(cfg['imu_from_lidar_xyz'],[cfg['imu_xyz'][0],cfg['imu_xyz'][1],cfg['imu_xyz'][2]-cfg['measurement_z']]))}" message="IMU offsets disagree with measurement origin"/>
+    <xacro:livox_require condition="${python.all(math.isclose(a,b-c,abs_tol=1e-8) for a,b,c in python.zip(cfg['imu_from_lidar_xyz'],cfg['imu_xyz'],cfg['measurement_xyz']))}" message="IMU offsets disagree with measurement origin"/>
     <xacro:livox_require condition="${python.type(cfg['connector_collision']) == bool}" message="connector_collision must be boolean"/>
     <xacro:if value="${cfg['connector_collision']}">
       <xacro:livox_check_vector value="${cfg['connector']['xyz']}" field="connector.xyz"/>

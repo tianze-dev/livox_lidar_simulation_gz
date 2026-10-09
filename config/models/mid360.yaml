@@ -19,7 +19,7 @@ mass: 0.265
 size_x: 0.065
 size_y: 0.065
 size_z: 0.060
-measurement_z: 0.047
+measurement_xyz: [0, 0, 0.047]
 imu_xyz: [0.011, 0.02329, 0.00288]
 imu_from_lidar_xyz: [0.011, 0.02329, -0.04412]
 visual_mesh: package://livox_lidar_simulation_gz/meshes/mid360/mid360.dae

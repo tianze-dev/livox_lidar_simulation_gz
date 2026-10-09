@@ -19,6 +19,8 @@ from sensor_msgs.msg import Imu, JointState, PointCloud2
 from sensor_msgs_py import point_cloud2
 from tf2_msgs.msg import TFMessage
 from smoke_runtime import stamp_seconds
+from ament_index_python.packages import get_package_share_directory
+from livox_lidar_simulation_gz.configuration import load_model
 
 
 def main():
@@ -28,6 +30,8 @@ def main():
     parser.add_argument('--seconds', type=float, default=6)
     parser.add_argument('--output', type=Path, default=Path('run/release_runtime'))
     args = parser.parse_args()
+    config = load_model(get_package_share_directory('livox_lidar_simulation_gz'), args.model)
+    lidar_origin = np.array(config['measurement_xyz'])
     if not math.isfinite(args.seconds) or not 3 <= args.seconds <= 3600 or (args.moving and args.seconds > 15):
         parser.error('seconds must be 3..3600 (moving fixture: at most 15 to stay within rail limits)')
     args.output.mkdir(parents=True, exist_ok=True)
@@ -94,7 +98,7 @@ def main():
             imu_steps = np.diff([stamp_seconds(msg.header.stamp) for msg in imus])
             assert abs(float(np.median(imu_steps)) - .005) < .002
             if not args.moving:
-                assert np.count_nonzero(np.abs(points[:, 0] - 3.9) < .01) > 100
+                assert np.count_nonzero(np.abs(points[:, 0] + lidar_origin[0] - 3.9) < .01) > 100
                 assert abs(imus[-1].linear_acceleration.z - 9.80665) < .05
             else:
                 joint_times = np.array([stamp_seconds(msg.header.stamp) for msg in joints])
@@ -109,7 +113,7 @@ def main():
                     cloud_points = point_cloud2.read_points_numpy(msg, field_names=('x', 'y', 'z', 'intensity'))
                     surface = cloud_points[np.abs(cloud_points[:, 3]-80) < .01]
                     assert len(surface) > 100
-                    world_x = x + math.cos(yaw)*surface[:, 0] - math.sin(yaw)*surface[:, 1]
+                    world_x = x + math.cos(yaw)*(surface[:, 0]+lidar_origin[0]) - math.sin(yaw)*(surface[:, 1]+lidar_origin[1])
                     errors.extend(np.abs(world_x-3.9).tolist())
                 assert len(errors) > 1000
                 p95 = float(np.percentile(errors, 95))
@@ -134,9 +138,6 @@ def main():
                 assert tf_errors and max(tf_errors) < .001, 'Dynamic TF disagrees with joint feedback'
                 acceleration = np.median([[msg.linear_acceleration.x, msg.linear_acceleration.y,
                                             msg.linear_acceleration.z] for msg in list(imus)[-200:]], axis=0)
-                from ament_index_python.packages import get_package_share_directory
-                from livox_lidar_simulation_gz.configuration import load_model
-                config = load_model(get_package_share_directory('livox_lidar_simulation_gz'), args.model)
                 expected_accel = np.array([-.15**2*config['imu_xyz'][0], -.15**2*config['imu_xyz'][1], 9.80665])
                 assert np.max(np.abs(acceleration-expected_accel)) < .03
                 report.update(wall_residual_p95_m=p95, imu_gyro_z=angular,

@@ -20,6 +20,8 @@ from rosgraph_msgs.msg import Clock
 from sensor_msgs.msg import PointCloud2, Imu
 from sensor_msgs_py import point_cloud2
 from tf2_msgs.msg import TFMessage
+from ament_index_python.packages import get_package_share_directory
+from livox_lidar_simulation_gz.configuration import load_model
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -102,7 +104,9 @@ def main():
                 assert frames[name+'_body'].header.frame_id == 'base_link'
                 assert abs(frames[name+'_body'].transform.translation.x-x) < 1e-6
                 points = point_cloud2.read_points_numpy(cloud, field_names=('x','y','z'))
-                assert np.count_nonzero(np.abs(points[:,0]-(3.9-x)) < .01) > 100
+                cfg = load_model(get_package_share_directory('livox_lidar_simulation_gz'),
+                                 'mid360' if name == 'front' else 'avia')
+                assert np.count_nonzero(np.abs(points[:,0]-(3.9-x-cfg['measurement_xyz'][0])) < .01) > 100
                 times = [m.header.stamp.sec+m.header.stamp.nanosec*1e-9 for m in clouds[name]]
                 assert abs(np.median(np.diff(times))-.1) < .002
             assert len(node.get_publishers_info_by_topic('/clock')) == 1

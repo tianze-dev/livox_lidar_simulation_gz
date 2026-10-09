@@ -24,20 +24,22 @@ def load_model(share, model):
         raise ValueError('Pattern filename must not contain a path')
     config.update(layout)
     for key in ('lidar_rate', 'imu_rate', 'mass', 'size_x', 'size_y', 'size_z',
-                'collision_body_height', 'measurement_z', 'range_max'):
+                'collision_body_height', 'range_max'):
         number(config.get(key), key, positive=True)
     low, high = number(config.get('range_min'), 'range_min'), config['range_max']
     if not 0 <= low < high:
         raise ValueError('Invalid range')
     if config['mass'] <= 0.000002 or config['lidar_rate'] > 1e6 or config['imu_rate'] > 1e6:
         raise ValueError('Mass or update rate exceeds supported limits')
-    for key in ('imu_xyz', 'imu_from_lidar_xyz'):
+    for key in ('measurement_xyz', 'imu_xyz', 'imu_from_lidar_xyz'):
         vector3(config[key], key)
         for value in config[key]:
             number(value, key)
-    if not 0 < config['measurement_z'] <= config['size_z']:
+    if not (abs(config['measurement_xyz'][0]) <= config['size_x']/2
+            and abs(config['measurement_xyz'][1]) <= config['size_y']/2
+            and 0 < config['measurement_xyz'][2] <= config['size_z']):
         raise ValueError('Invalid measurement origin')
-    expected = [config['imu_xyz'][0], config['imu_xyz'][1], config['imu_xyz'][2] - config['measurement_z']]
+    expected = [a-b for a,b in zip(config['imu_xyz'], config['measurement_xyz'])]
     if not all(math.isclose(a, b, abs_tol=1e-8) for a, b in zip(expected, config['imu_from_lidar_xyz'])):
         raise ValueError('IMU offsets disagree with measurement origin')
     if type(config.get('connector_collision')) is not bool:

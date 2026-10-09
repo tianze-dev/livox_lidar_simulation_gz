@@ -50,7 +50,7 @@ def test_avia_lightweight_collision_covers_mesh(asset, monkeypatch):
         covered |= (np.abs(points-origin) <= size/2 + 1e-7).all(axis=1)
     assert covered.all()
     cfg = yaml.safe_load((ROOT/'config/models/avia.yaml').read_text())
-    assert cfg['imu_extrinsics_status'] == 'uncalibrated_approximation'
+    assert cfg['imu_extrinsics_status'] == 'official_manual_nominal_not_device_calibrated'
     assert robot.find("link[@name='avia_lidar']/visual/geometry/mesh") is not None
     assert robot.find("link[@name='avia_body']/visual") is None  # RGL self exclusion.
 
@@ -69,3 +69,30 @@ def test_avia_window_front_winding_and_materials(asset):
     assert len(root.findall('.//c:material', NS)) == 3
     assert not root.findall('.//c:image', NS)  # No external texture dependency.
     assert not root.findall('.//c:transparent', NS)
+
+
+def test_avia_manual_frames_preserve_visual_mount(monkeypatch):
+    import xacro
+    import xacro.substitution_args
+    monkeypatch.setattr(xacro.substitution_args, '_eval_find', lambda name: str(ROOT))
+    robot = ET.fromstring(xacro.process_file(str(ROOT/'urdf/demo.urdf.xacro'),
+        mappings={'model': 'avia', 'name': 'avia'}).toxml())
+    lidar = np.fromstring(robot.find("joint[@name='avia_lidar_joint']/origin").get('xyz'), sep=' ')
+    imu = np.fromstring(robot.find("joint[@name='avia_imu_joint']/origin").get('xyz'), sep=' ')
+    visual = np.fromstring(robot.find("link[@name='avia_lidar']/visual/origin").get('xyz'), sep=' ')
+    # Manual Fig. 5.1.1 gives the IMU offset and equal axis orientation.
+    assert np.allclose(imu-lidar, [-.04165, -.02326, .02840], atol=1e-10)
+    assert np.allclose(lidar, [.04533, 0, .0324])
+    assert np.allclose(imu, [.00368, -.02326, .0608])
+    assert np.allclose(visual+lidar, 0), 'Frame correction must not move the physical model'
+    assert robot.find('.//plugin/range/min').text == '1.0'
+
+
+def test_avia_close_up_fits_larger_housing(tmp_path):
+    from livox_lidar_simulation_gz.configuration import load_sensors
+    from livox_lidar_simulation_gz.world import prepare_rviz
+    sensors = load_sensors(ROOT, defaults={'model':'avia', 'name':'avia'})
+    config = yaml.safe_load(prepare_rviz(ROOT, tmp_path, sensors, True).read_text())
+    view = config['Visualization Manager']['Views']['Current']
+    assert view['Distance'] == pytest.approx(.252)
+    assert view['Focal Point']['Z'] == pytest.approx(1.0324)

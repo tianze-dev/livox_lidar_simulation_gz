@@ -64,19 +64,19 @@
       <!-- RGL excludes visuals in the sensor's own link, not the whole robot. -->
       <xacro:if value="${actual_mesh != ''}">
         <visual name="${name}_external_mesh">
-          <origin xyz="0 0 ${-cfg['measurement_z']}" rpy="${mesh_rpy}"/>
+          <origin xyz="${-cfg['measurement_xyz'][0]} ${-cfg['measurement_xyz'][1]} ${-cfg['measurement_xyz'][2]}" rpy="${mesh_rpy}"/>
           <geometry><mesh filename="${actual_mesh}"/></geometry>
         </visual>
       </xacro:if>
       <xacro:unless value="${actual_mesh != ''}">
         <xacro:if value="${cfg['visual_style'] == 'dome'}">
         <visual name="${name}_base_visual">
-          <origin xyz="0 0 ${sz * 0.28 - cfg['measurement_z']}"/>
+          <origin xyz="${-cfg['measurement_xyz'][0]} ${-cfg['measurement_xyz'][1]} ${sz * 0.28 - cfg['measurement_xyz'][2]}"/>
           <geometry><box size="${sx} ${sy} ${sz * 0.56}"/></geometry>
           <material name="${name}_silver"><color rgba="0.65 0.68 0.72 1"/></material>
         </visual>
         <visual name="${name}_cover_visual">
-          <origin xyz="0 0 ${sz * 0.76 - cfg['measurement_z']}"/>
+          <origin xyz="${-cfg['measurement_xyz'][0]} ${-cfg['measurement_xyz'][1]} ${sz * 0.76 - cfg['measurement_xyz'][2]}"/>
           <geometry><cylinder radius="${sx * 0.44}" length="${sz * 0.48}"/></geometry>
           <material name="${name}_blue"><color rgba="0.05 0.23 0.3 1"/></material>
         </visual>
@@ -85,7 +85,7 @@
     </link>
     <joint name="${name}_lidar_joint" type="fixed">
       <parent link="${name}_body"/><child link="${name}_lidar"/>
-      <origin xyz="0 0 ${cfg['measurement_z']}"/>
+      <origin xyz="${cfg['measurement_xyz'][0]} ${cfg['measurement_xyz'][1]} ${cfg['measurement_xyz'][2]}"/>
     </joint>
     <link name="${name}_imu">
       <inertial><mass value="${frame_mass}"/><inertia ixx="1e-9" iyy="1e-9" izz="1e-9" ixy="0" ixz="0" iyz="0"/></inertial>

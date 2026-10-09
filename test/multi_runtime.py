@@ -88,11 +88,13 @@ def main():
             assert imus[name][-1].header.frame_id == name + '_imu'
             assert cloud.point_step == 16 and len(cloud.data) == cloud.row_step * cloud.height
             points = point_cloud2.read_points_numpy(cloud, field_names=('x', 'y', 'z'))
-            maximum = load_model(share, sensors[name]['model'])['rays_per_frame']
+            model = load_model(share, sensors[name]['model'])
+            maximum = model['rays_per_frame']
             assert 100 < len(points) <= maximum and np.isfinite(points).all()
             x = float(sensors[name]['xyz'].split()[0])
             yaw = float(sensors[name]['rpy'].split()[2])
-            projected_x = x + np.cos(yaw)*points[:, 0] - np.sin(yaw)*points[:, 1]
+            origin = model['measurement_xyz']
+            projected_x = x + np.cos(yaw)*(points[:, 0]+origin[0]) - np.sin(yaw)*(points[:, 1]+origin[1])
             hits[name] = int(np.count_nonzero(np.abs(projected_x - world_x) < 0.01))
             assert hits[name] > 100, f'{name}: missing world wall at {world_x}'
         return hits
@@ -106,8 +108,10 @@ def main():
                  'gui:=false', 'rviz:=false',
                  'sensors_file:=' + str(profile)],
                 stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+            expected_frames = {name+suffix for name in names for suffix in ('_body','_lidar','_imu')}
             wait_for(lambda: all(counts[name] >= 8 and len(imus[name]) >= 80 for name in names)
-                     and bool(clocks), 45)
+                     and bool(clocks) and expected_frames <=
+                     {tf.child_frame_id for msg in transforms for tf in msg.transforms}, 45)
             report['initial_wall_hits'] = check_wall(3.9)
             frames = {tf.child_frame_id: tf for msg in transforms for tf in msg.transforms}
             for name in names:
