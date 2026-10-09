@@ -1,67 +1,83 @@
 # Livox LiDAR Simulation for Gazebo
 
-An unofficial, standalone Livox simulation suite using RGL, ROS 2 Jazzy and Gazebo Harmonic.
-The repository root is one ROS package, suitable for a pinned Git submodule in a parent workspace.
-No other robot workspace is used as a dependency.
+An unofficial RGL-based Livox simulator for **MID-360, Avia, ROS 2 Jazzy and Gazebo Harmonic**.
 
-## Supported features
+Detailed models, GPU point clouds, IMU and TF, with single-sensor, dual-sensor and moving demos. Use it as a standalone ROS package or a Git submodule. Version: 0.1.0 prerelease.
 
-- MID-360: detailed colored mesh, lightweight collision, manufacturer nominal extrinsics, standard PointCloud2/IMU, static and moving demos.
-- Avia: official CAD-derived detailed appearance, lightweight collision, non-repetitive scan-pattern and standard-interface preview. Measurement/IMU origins remain approximations. See [asset provenance and pending public redistribution terms](meshes/avia/NOTICE.md).
-- One geometric return per ray, whole-frame snapshots, finite scan-pattern replay. No per-point timestamps, motion distortion, CustomMsg, FAST-LIVO2, CSV conversion or hardware protocol emulation.
+[中文](README.md) · [Integration](docs/INTEGRATION.md) · [Supported features](docs/SUPPORT.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
-Version 0.1.0 is a prerelease. See [support matrix](docs/SUPPORT.md), [integration](docs/INTEGRATION.md) and [contributing](CONTRIBUTING.md).
+## Preview
 
-Both models include optional PBR GLB assets; DAE remains the default. For GLB, set
-`visual_mesh:=package://livox_lidar_simulation_gz/meshes/<model>/<model>.glb`
-and `mesh_rpy:="1.5707963267948966 0 0"` (Y-up to Z-up, visual only).
-`config/demos/mixed_glb.yaml` provides both models with this correction.
-Metal surfaces appear darker under the current Gazebo lighting; full material-extension
-fidelity and RViz GLB appearance have not been validated. Collision and sensor frames are unchanged.
+Default DAE models rendered in Gazebo:
 
-## Build
+| MID-360 | Avia |
+|:---:|:---:|
+| ![MID-360 rendered in Gazebo](docs/images/mid360-gazebo.png) | ![Avia rendered in Gazebo](docs/images/avia-gazebo.png) |
 
-Target: Ubuntu 24.04 x86_64, ROS 2 Jazzy, Gazebo Harmonic, supported NVIDIA GPU/driver.
-System dependencies are declared in package.xml. Review and install them with rosdep if needed.
+Avia scan pattern displayed in RViz, colored by height:
+
+![Avia point cloud in RViz](docs/images/avia-pointcloud.png)
+
+| Model | Rays per frame | Point cloud rate | IMU rate | Simulated range |
+|---|---:|---:|---:|---:|
+| MID-360 | 20,000 | 10 Hz | 200 Hz | 0.1–40 m |
+| Avia | 24,000 | 10 Hz | 200 Hz | 0.1–190 m |
+
+Rates use simulation time; only ray hits are published. DAE is the default appearance format; [optional PBR GLB assets](docs/INTEGRATION.md#可选-glb-外观) are also included.
+
+## Quick start
+
+**Ubuntu 24.04 x86_64, ROS 2 Jazzy, Gazebo Harmonic and an NVIDIA GPU are required.** There is no CPU simulation backend.
 
 ```bash
+git clone https://github.com/tianze-dev/livox_lidar_simulation_gz.git
+cd livox_lidar_simulation_gz
 source /opt/ros/jazzy/setup.bash
+
+# Install declared dependencies; rosdep must already be initialized
+rosdep install --from-paths . --ignore-src -r -y
+bash scripts/check_environment.sh
 python3 scripts/fetch_dependencies.py
 bash scripts/build.sh
 source install/local_setup.bash
+
+# Launch MID-360 with Gazebo and RViz
+bash scripts/run.sh
 ```
 
-Downloads are pinned and SHA256-checked. Configure/build never downloads dependencies implicitly.
-Use `--offline` to validate a complete cache. A custom download `--cache-dir PATH` corresponds to `-DLIVOX_RGL_CACHE=PATH` in CMake.
+RGL dependencies are version-pinned and SHA256-checked, with a local cache in `.deps/rgl`. See [troubleshooting](docs/TROUBLESHOOTING.md) for offline use, custom cache paths and installation issues.
 
-## Run and test
+## Demos
+
+Run from the repository root, one demo at a time:
 
 ```bash
-bash scripts/run.sh gui:=false rviz:=false
-bash scripts/run.sh model:=avia name:=avia gui:=false rviz:=false
-bash scripts/run.sh moving:=true
+# Avia
+bash scripts/run.sh model:=avia name:=avia
+# Close-up model view
 bash scripts/run.sh model_view:=true
-bash scripts/check.sh --unit
-bash scripts/check.sh --gpu
-bash scripts/check.sh --endurance
-python3 scripts/release_check.py
+# Moving rail and turntable
+bash scripts/run.sh moving:=true
+# MID-360 + Avia
+bash scripts/run.sh sensors_file:=config/demos/mixed.yaml
+# Headless
+bash scripts/run.sh gui:=false rviz:=false
 ```
 
-Each default sensor publishes `/livox/<name>/points` and `/livox/<name>/imu` at 10 Hz and 200 Hz in simulation time. PointCloud2 has float32 x/y/z/intensity, point_step=16. Only hits are returned. Intensity is Gazebo laser_retro, not calibrated reflectivity.
+Default topics are `/livox/<name>/points` (PointCloud2) and `/livox/<name>/imu` (Imu), alongside `/clock` and TF. The wrapper defaults to ROS domain 119; set `ROS_DOMAIN_ID` to avoid conflicts with other simulations or hardware.
 
-The moving fixture uses actual Gazebo joint states to drive dynamic TF; its rail travel is limited to ±2.5 m. Defaults are 0.1 m/s and 0.15 rad/s. It is a validation fixture, not a navigation stack.
+## Robot integration
 
-`sensor.launch.py` only creates bridges and does not own a world, GUI, robot or TF. The parent owns integration-specific transforms and lifecycle. Keep sensor names unique even across namespaces.
+Place this package under the parent workspace's `src/`, build with colcon and attach the sensor through Xacro. The parent owns the world, robot TF and launch orchestration; `sensor.launch.py` only creates message bridges. See the [integration guide](docs/INTEGRATION.md) for examples.
 
-## Container
+The simulator uses whole-frame snapshots and an ideal IMU. Per-point timing, motion distortion, CustomMsg and FAST-LIVO2 integration are not provided. MID-360 extrinsics use manufacturer nominal values; Avia extrinsics are approximations. See [support details](docs/SUPPORT.md) for parameters and limitations.
+
+## Tests and contributions
 
 ```bash
-docker build -f docker/Dockerfile -t livox-gz:0.1.0 .
-docker run --rm --gpus all livox-gz:0.1.0 python3 test/smoke_runtime.py
+bash scripts/check.sh --unit       # Unit tests
+bash scripts/check.sh --gpu        # GPU runtime regression
+bash scripts/check.sh --endurance  # Stability checks
 ```
 
-The image builds and runs unit tests without a GPU; runtime tests require NVIDIA Container Toolkit and a GPU. The container does not mount host workspaces. CPU CI does not claim GPU tests passed. The base image is digest-pinned, but apt packages are resolved at build time.
-
-## License
-
-Original project code: Apache-2.0. Upstream code and assets retain their notices and applicable terms; see LICENSE, NOTICE and THIRD_PARTY_NOTICES.md. The MID-360 asset redistribution basis is separately recorded in meshes/mid360/NOTICE.md. No official endorsement is implied.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines. Original code is licensed under [Apache-2.0](LICENSE); third-party code and models retain their [own notices](THIRD_PARTY_NOTICES.md). Public redistribution terms for the Avia CAD-derived assets remain unconfirmed.

@@ -48,6 +48,8 @@ install(FILES third_party/livox_scan/LICENSE DESTINATION share/${PROJECT_NAME}/t
 install(FILES dependencies/lock.json DESTINATION share/${PROJECT_NAME}/dependencies)
 install(FILES docs/INTEGRATION.md docs/SUPPORT.md docs/TROUBLESHOOTING.md
   DESTINATION share/${PROJECT_NAME}/docs)
+install(FILES docs/images/mid360-gazebo.png docs/images/avia-gazebo.png
+  docs/images/avia-pointcloud.png DESTINATION share/${PROJECT_NAME}/docs/images)
 ament_environment_hooks(hooks/livox_gz.dsv.in)
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
